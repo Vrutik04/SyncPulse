@@ -3,14 +3,14 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
-import { CheckinInputs } from "@/components/forms/CheckinInputs";
-import { CheckoutInputs } from "@/components/forms/CheckoutInputs";
-import { PrimaryButton } from "@/components/PrimaryButton";
-import { ScreenContainer } from "@/components/ScreenContainer";
-import { SuccessBanner } from "@/components/SuccessBanner";
-import { formatDisplayDate, getDateKey } from "@/lib/date";
+import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
+import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
+import { PrimaryButton } from "@/shared/components/PrimaryButton";
+import { ScreenContainer } from "@/shared/components/ScreenContainer";
+import { SuccessBanner } from "@/shared/components/SuccessBanner";
+import { formatDisplayDate, getDateKey } from "@/shared/utils/date";
 import { useZustandStore } from "@/store/useZustandStore";
-import type { WorkItem } from "@/types/checkIn";
+import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
 
 // Types
 
@@ -22,7 +22,7 @@ type FormState = {
 };
 
 type UIState = {
-  activeTab: "Morning" | "Evening";
+  activeTab: "Checkin" | "Checkout";
   checkInSuccess: boolean;
   checkOutSuccess: boolean;
   loading: boolean;
@@ -36,11 +36,11 @@ type UIState = {
 // Screen
 
 type Props = {
-  route?: { params?: { tab?: "Morning" | "Evening" } };
+  route?: { params?: { tab?: "Checkin" | "Checkout" } };
 };
 
 export const CheckInOutScreen = ({ route }: Props) => {
-  const initialTab: "Morning" | "Evening" = route?.params?.tab ?? "Morning";
+  const initialTab: "Checkin" | "Checkout" = route?.params?.tab ?? "Checkin";
 
   const today = getDateKey();
   const { entries, saveCheckIn, saveCheckOut } = useZustandStore();
@@ -72,23 +72,26 @@ export const CheckInOutScreen = ({ route }: Props) => {
 
   // Pre-fill form with today's saved data when it exists.
   useEffect(() => {
-    if (todayEntry?.morning) {
+    if (todayEntry?.Checkin) {
       setForm((prev) => ({
         ...prev,
-        projectName: todayEntry.morning?.projectName ?? "",
-        goal: todayEntry.morning?.goal ?? "",
-        note: todayEntry.morning?.note ?? "",
+        projectName: todayEntry.Checkin?.projectName ?? "",
+        goal: todayEntry.Checkin?.goal ?? "",
+        note: todayEntry.Checkin?.note ?? "",
       }));
     }
-    if (todayEntry?.evening?.works?.length) {
-      setForm((prev) => ({ ...prev, works: todayEntry.evening!.works! }));
+    if (todayEntry?.Checkout?.works?.length) {
+      setForm((prev) => ({ ...prev, works: todayEntry.Checkout!.works! }));
     }
   }, [todayEntry]);
 
-  const isCheckInDone = !!todayEntry?.morning;
+  const isCheckInDone = !!todayEntry?.Checkin;
 
   // Helpers
-  const updateForm = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+  const updateForm = <K extends keyof FormState>(
+    key: K,
+    value: FormState[K],
+  ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -131,18 +134,22 @@ export const CheckInOutScreen = ({ route }: Props) => {
 
   // Render
   return (
-    <ScreenContainer title="Daily Check-in" subtitle={formatDisplayDate(today)}>
-
+    <ScreenContainer
+      title="Daily Check-in/out"
+      subtitle={formatDisplayDate(today)}
+    >
       {/* Tab switcher */}
       <View className="flex-row bg-ink-100 dark:bg-ink-800 p-1 rounded-xl mb-6">
         <Pressable
-          onPress={() => updateUI("activeTab", "Morning")}
-          style={ui.activeTab === "Morning" ? { backgroundColor: "#c45c3e" } : {}}
+          onPress={() => updateUI("activeTab", "Checkin")}
+          style={
+            ui.activeTab === "Checkin" ? { backgroundColor: "#c45c3e" } : {}
+          }
           className="flex-1 py-2.5 rounded-lg items-center justify-center"
         >
           <Text
             className={`font-semibold text-sm ${
-              ui.activeTab === "Morning"
+              ui.activeTab === "Checkin"
                 ? "text-white"
                 : "text-ink-500 dark:text-ink-400"
             }`}
@@ -152,13 +159,15 @@ export const CheckInOutScreen = ({ route }: Props) => {
         </Pressable>
 
         <Pressable
-          onPress={() => updateUI("activeTab", "Evening")}
-          style={ui.activeTab === "Evening" ? { backgroundColor: "#c45c3e" } : {}}
+          onPress={() => updateUI("activeTab", "Checkout")}
+          style={
+            ui.activeTab === "Checkout" ? { backgroundColor: "#c45c3e" } : {}
+          }
           className="flex-1 py-2.5 rounded-lg items-center justify-center"
         >
           <Text
             className={`font-semibold text-sm ${
-              ui.activeTab === "Evening"
+              ui.activeTab === "Checkout"
                 ? "text-white"
                 : "text-ink-500 dark:text-ink-400"
             }`}
@@ -169,9 +178,8 @@ export const CheckInOutScreen = ({ route }: Props) => {
       </View>
 
       {/*  Check-in */}
-      {ui.activeTab === "Morning" && (
+      {ui.activeTab === "Checkin" && (
         <View className="mb-6 rounded-3xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 shadow-sm overflow-hidden">
-
           {/* Coloured top bar when checked in */}
           {isCheckInDone && (
             <View
@@ -212,7 +220,10 @@ export const CheckInOutScreen = ({ route }: Props) => {
             </View>
 
             {/* Form */}
-            <SuccessBanner visible={ui.checkInSuccess} message="Check-in saved!" />
+            <SuccessBanner
+              visible={ui.checkInSuccess}
+              message="Check-in saved!"
+            />
             <CheckinInputs
               projectName={form.projectName}
               onProjectNameChange={(v) => updateForm("projectName", v)}
@@ -223,7 +234,9 @@ export const CheckInOutScreen = ({ route }: Props) => {
             />
             <View className="mt-5">
               <PrimaryButton
-                label={todayEntry?.morning ? "Update Check-in" : "Submit Check-In"}
+                label={
+                  todayEntry?.Checkin ? "Update Check-in" : "Submit Check-In"
+                }
                 onPress={handleCheckIn}
               />
             </View>
@@ -232,11 +245,10 @@ export const CheckInOutScreen = ({ route }: Props) => {
       )}
 
       {/* Check-out */}
-      {ui.activeTab === "Evening" && (
+      {ui.activeTab === "Checkout" && (
         <View className="rounded-3xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 shadow-sm mb-8 overflow-hidden">
-
           {/* Coloured top bar when checked out */}
-          {todayEntry?.evening && (
+          {todayEntry?.Checkout && (
             <View
               style={{ backgroundColor: "#c45c3e" }}
               className="flex-row items-center px-5 py-3"
@@ -254,13 +266,13 @@ export const CheckInOutScreen = ({ route }: Props) => {
               <View
                 className={`w-9 h-9 rounded-full items-center justify-center mr-3 ${
                   isCheckInDone
-                    ? todayEntry?.evening
+                    ? todayEntry?.Checkout
                       ? "bg-green-100 dark:bg-green-900/40"
                       : "bg-orange-100 dark:bg-clay/20"
                     : "bg-ink-100 dark:bg-ink-800"
                 }`}
               >
-                {todayEntry?.evening ? (
+                {todayEntry?.Checkout ? (
                   <Ionicons name="checkmark" size={18} color="#16a34a" />
                 ) : (
                   <Text
@@ -300,20 +312,28 @@ export const CheckInOutScreen = ({ route }: Props) => {
                   Check-in Required
                 </Text>
                 <Text className="text-ink-400 dark:text-ink-500 text-xs text-center px-4">
-                  Complete your morning check-in first to unlock the checkout form.
+                  Complete your Checkin check-in first to unlock the checkout
+                  form.
                 </Text>
               </View>
             ) : (
               /* Form */
               <View>
-                <SuccessBanner visible={ui.checkOutSuccess} message="Check-out saved!" />
+                <SuccessBanner
+                  visible={ui.checkOutSuccess}
+                  message="Check-out saved!"
+                />
                 <CheckoutInputs
                   works={form.works}
                   onWorksChange={(v) => updateForm("works", v)}
                 />
                 <View className="mt-5">
                   <PrimaryButton
-                    label={todayEntry?.evening ? "Update Check-out" : "Submit Check-Out"}
+                    label={
+                      todayEntry?.Checkout
+                        ? "Update Check-out"
+                        : "Submit Check-Out"
+                    }
                     onPress={handleCheckOut}
                   />
                 </View>

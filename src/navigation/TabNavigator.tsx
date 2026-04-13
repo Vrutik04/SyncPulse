@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import type { TabParamList } from "@/navigation/types";
-import { CheckInOutScreen } from "@/screens/CheckInOutScreen";
-import { HistoryScreen } from "@/screens/HistoryScreen";
-import { HomeScreen } from "@/screens/HomeScreen";
-import { ProfileScreen } from "@/screens/ProfileScreen";
+import { CheckInOutScreen } from "@/features/checkincheckout/screens/CheckInOutScreen";
+import { HistoryScreen } from "@/features/history/screens/HistoryScreen";
+import { HomeScreen } from "@/features/home/screens/HomeScreen";
+import { ProfileScreen } from "@/features/profile/screens/ProfileScreen";
 import { Platform, useColorScheme } from "react-native";
 
 const Tab = createBottomTabNavigator<TabParamList>();

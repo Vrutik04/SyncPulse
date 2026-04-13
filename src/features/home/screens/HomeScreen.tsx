@@ -1,27 +1,48 @@
-import { ScreenContainer } from "@/components/ScreenContainer";
-import { DateTimeCard } from "@/components/DateTimeCard";
-import { formatDisplayDate, formatTime, getDateKey } from "@/lib/date";
+import { DateTimeCard } from "@/features/checkincheckout/components/DateTimeCard";
+import { MissedCheckoutModal } from "@/features/checkincheckout/components/MissedCheckoutModal";
+import { isMissedCheckout } from "@/lib/missedCheckout";
+import type { HomeScreenNavigationProp } from "@/navigation/types";
+import { ScreenContainer } from "@/shared/components/ScreenContainer";
+import { formatDisplayDate, formatTime, getDateKey } from "@/shared/utils/date";
 import { useZustandStore } from "@/store/useZustandStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 export const HomeScreen = () => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
 
   const today = getDateKey();
   const entries = useZustandStore((state) => state.entries);
   const todayEntry = entries[today];
 
-  const isCheckinDone = !!todayEntry?.morning;
-  const isCheckoutDone = !!todayEntry?.evening;
+  const isCheckinDone = !!todayEntry?.Checkin;
+  const isCheckoutDone = !!todayEntry?.Checkout;
 
-  // 0 = nothing, 0.5 = checked in, 1 = both done
-  const progress = isCheckinDone && isCheckoutDone ? 1 : isCheckinDone ? 0.5 : 0;
+  const progress =
+    isCheckinDone && isCheckoutDone ? 1 : isCheckinDone ? 0.5 : 0;
+
+  const [showModal, setShowModal] = useState(false);
+  const alreadyChecked = useRef(false);
+
+  useEffect(() => {
+    if (alreadyChecked.current) return;
+    alreadyChecked.current = true;
+    if (isMissedCheckout(entries)) {
+      setShowModal(true);
+    }
+  }, []);
 
   return (
-    <ScreenContainer title="Home" subtitle={formatDisplayDate(today)}>
-
+    <ScreenContainer
+      title="Welcome to SyncPulse"
+      subtitle={formatDisplayDate(today)}
+    >
+      <MissedCheckoutModal
+        visible={showModal}
+        onDismiss={() => setShowModal(false)}
+      />
       {/* Today's Overview card */}
       <View className="mb-6 rounded-3xl border border-clay/30 dark:border-clay/40 bg-orange-50 dark:bg-ink-900 p-5 shadow-sm">
         <View className="flex-row items-center mb-3">
@@ -32,51 +53,58 @@ export const HomeScreen = () => {
         </View>
 
         <View className="bg-white dark:bg-ink-800 rounded-2xl p-4 border border-orange-100 dark:border-ink-700 flex-row justify-between">
-
-          {/* Morning — tap to open Check-in tab */}
+          {/* Checkin — tap to open Check-in tab */}
           <Pressable
             className="flex-1"
-            onPress={() => navigation.navigate("CheckInOut", { tab: "Morning" })}
+            onPress={() =>
+              navigation.navigate("CheckInOut", { tab: "Checkin" })
+            }
           >
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
-              Morning
+              Check in
             </Text>
-            {todayEntry?.morning?.checkedInAt ? (
+            {todayEntry?.Checkin?.checkedInAt ? (
               <View className="flex-row items-center">
                 <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
                 <Text className="text-sm font-semibold text-ink-800 dark:text-ink-100 ml-2">
-                  {formatTime(todayEntry.morning.checkedInAt)}
+                  {formatTime(todayEntry.Checkin.checkedInAt)}
                 </Text>
               </View>
             ) : (
               <View className="flex-row items-center">
-                <Ionicons name="ellipse-outline" size={16} color="#9ca3af" />
-                <Text className="text-sm text-ink-400 dark:text-ink-500 ml-2">Pending</Text>
+                <Ionicons name="time-outline" size={16} color="#9ca3af" />
+                <Text className="text-sm text-ink-400 dark:text-ink-500 ml-2">
+                  Pending
+                </Text>
               </View>
             )}
           </Pressable>
 
           <View className="w-px bg-ink-100 dark:bg-ink-700 mx-4" />
 
-          {/* Evening — tap to open Check-out tab */}
+          {/* Checkout — tap to open Check-out tab */}
           <Pressable
             className="flex-1"
-            onPress={() => navigation.navigate("CheckInOut", { tab: "Evening" })}
+            onPress={() =>
+              navigation.navigate("CheckInOut", { tab: "Checkout" })
+            }
           >
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
-              Evening
+              Check out
             </Text>
-            {todayEntry?.evening?.checkedOutAt ? (
+            {todayEntry?.Checkout?.checkedOutAt ? (
               <View className="flex-row items-center">
                 <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
                 <Text className="text-sm font-semibold text-ink-800 dark:text-ink-100 ml-2">
-                  {formatTime(todayEntry.evening.checkedOutAt)}
+                  {formatTime(todayEntry.Checkout.checkedOutAt)}
                 </Text>
               </View>
             ) : (
               <View className="flex-row items-center">
                 <Ionicons name="time-outline" size={16} color="#9ca3af" />
-                <Text className="text-sm text-ink-400 dark:text-ink-500 ml-2">Pending</Text>
+                <Text className="text-sm text-ink-400 dark:text-ink-500 ml-2">
+                  Pending
+                </Text>
               </View>
             )}
           </Pressable>
@@ -90,7 +118,7 @@ export const HomeScreen = () => {
 
       {/* Quick navigate button */}
       <Text className="mb-2 text-xs text-ink-400 dark:text-ink-500 uppercase tracking-wider">
-        Check In / Check Out
+        Checkin / Check Out
       </Text>
 
       <Pressable
@@ -101,49 +129,63 @@ export const HomeScreen = () => {
           <Ionicons name="create" size={24} color="#c45c3e" />
         </View>
         <View className="flex-1">
-          <Text className="font-semibold text-ink-900 dark:text-ink-50">Check In</Text>
-          <Text className="text-sm text-ink-400 dark:text-ink-400">Mark your Check-in</Text>
+          <Text className="font-semibold text-ink-900 dark:text-ink-50">
+            Checkin
+          </Text>
+          <Text className="text-sm text-ink-400 dark:text-ink-400">
+            Please Check-in
+          </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
       </Pressable>
 
       {/* Today's summary */}
-      <Text className="mb-2 text-xs text-ink-400 dark:text-ink-500 uppercase tracking-wider">Today</Text>
+      <Text className="mb-2 text-xs text-ink-400 dark:text-ink-500 uppercase tracking-wider">
+        Today
+      </Text>
 
-      {/* Morning summary */}
+      {/* Checkin summary */}
       <View className="mb-3 p-4 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900">
-        <Text className="text-xs text-ink-400 dark:text-ink-500 mb-1">Check-in</Text>
+        <Text className="text-xs text-ink-400 dark:text-ink-500 mb-1">
+          Check-in
+        </Text>
         {isCheckinDone ? (
           <>
             <Text className="font-semibold text-ink-900 dark:text-ink-50">
-              {todayEntry?.morning?.projectName}
+              {todayEntry?.Checkin?.projectName}
             </Text>
             <Text className="text-sm text-ink-600 dark:text-ink-300">
-              {todayEntry?.morning?.goal}
+              {todayEntry?.Checkin?.goal}
             </Text>
             <Text className="text-xs text-ink-400 dark:text-ink-500 mt-1">
-              {formatTime(todayEntry?.morning?.checkedInAt || "")}
+              {formatTime(todayEntry?.Checkin?.checkedInAt || "")}
             </Text>
           </>
         ) : (
-          <Text className="text-sm text-ink-400 dark:text-ink-500">Not filled yet</Text>
+          <Text className="text-sm text-ink-400 dark:text-ink-500">
+            Not filled yet
+          </Text>
         )}
       </View>
 
-      {/* Evening summary */}
+      {/* Checkout summary */}
       <View className="p-4 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900">
-        <Text className="text-xs text-ink-400 dark:text-ink-500 mb-1">Check-out</Text>
+        <Text className="text-xs text-ink-400 dark:text-ink-500 mb-1">
+          Check-out
+        </Text>
         {isCheckoutDone ? (
           <>
             <Text className="text-sm text-ink-700 dark:text-ink-200">
-              {todayEntry?.evening?.workCompleted}
+              {todayEntry?.Checkout?.workCompleted}
             </Text>
             <Text className="text-xs text-ink-400 dark:text-ink-500 mt-1">
-              {formatTime(todayEntry?.evening?.checkedOutAt || "")}
+              {formatTime(todayEntry?.Checkout?.checkedOutAt || "")}
             </Text>
           </>
         ) : (
-          <Text className="text-sm text-ink-400 dark:text-ink-500">Not filled yet</Text>
+          <Text className="text-sm text-ink-400 dark:text-ink-500">
+            Not filled yet
+          </Text>
         )}
       </View>
 
@@ -166,7 +208,6 @@ export const HomeScreen = () => {
               : "Not started yet"}
         </Text>
       </View>
-
     </ScreenContainer>
   );
 };

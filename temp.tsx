@@ -4,14 +4,14 @@
 
 // import type {
 //   DailyRecord,
-//   MorningEntry,
-//   EveningEntry,
+//   CheckinEntry,
+//   CheckoutEntry,
 //   ThemePreference,
 // } from "@/types/checkIn";
 
 // import { checkInPersistStorage } from "@/lib/persistStorage";
 
-// // 🎨 Theme options
+// //  Theme options
 // const themes: ThemePreference[] = ["light", "dark", "system"];
 
 // type ZustandStore = {
@@ -22,8 +22,8 @@
 //   setTheme: (value: ThemePreference) => void;
 //   toggleTheme: () => void;
 
-//   saveCheckIn: (date: string, data: MorningEntry) => void;
-//   saveCheckOut: (date: string, data: EveningEntry) => void;
+//   saveCheckIn: (date: string, data: CheckinEntry) => void;
+//   saveCheckOut: (date: string, data: CheckoutEntry) => void;
 
 //   getEntryByDate: (date: string) => DailyRecord | undefined;
 //   getAllDates: () => string[];
@@ -34,10 +34,10 @@
 //     (set, get) => ({
 //       entries: {},
 
-//       // 👉 default system theme
+//       //  default system theme
 //       theme: Appearance.getColorScheme() || "light",
 
-//       // 🎨 Set theme manually
+//       //  Set theme manually
 //       setTheme: (value) => {
 //         if (value === "system") {
 //           const systemTheme = Appearance.getColorScheme() || "light";
@@ -47,7 +47,7 @@
 //         }
 //       },
 
-//       // 🔁 Toggle theme
+//       //  Toggle theme
 //       toggleTheme: () =>
 //         set((state) => {
 //           const index = themes.indexOf(state.theme);
@@ -61,7 +61,7 @@
 //           return { theme: next };
 //         }),
 
-//       // 🌅 Check-in
+//       //  Check-in
 //       saveCheckIn: (date, data) =>
 //         set((state) => {
 //           const existing = state.entries[date] || { date };
@@ -72,7 +72,7 @@
 //               [date]: {
 //                 ...existing,
 //                 date,
-//                 morning: {
+//                 Checkin: {
 //                   ...data,
 //                   checkedInAt: new Date().toISOString(),
 //                 },
@@ -81,7 +81,7 @@
 //           };
 //         }),
 
-//       // 🌙 Check-out
+//       //  Check-out
 //       saveCheckOut: (date, data) =>
 //         set((state) => {
 //           const existing = state.entries[date] || { date };
@@ -92,7 +92,7 @@
 //               [date]: {
 //                 ...existing,
 //                 date,
-//                 evening: {
+//                 Checkout: {
 //                   ...data,
 //                   checkedOutAt: new Date().toISOString(),
 //                 },
@@ -119,21 +119,21 @@
 
 import { checkInPersistStorage } from "@/lib/persistStorage";
 import type {
-    DailyRecord,
-    EveningEntry,
-    MorningEntry,
-    ThemePreference,
-} from "@/types/checkIn";
+  CheckinEntry,
+  CheckoutEntry,
+  DailyRecord,
+  ThemePreference,
+} from "@/types/checkInOut";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type {
-    CheckoutStatus,
-    DailyRecord,
-    EveningEntry,
-    MorningEntry,
-    ThemePreference
-} from "@/types/checkIn";
+  CheckinEntry,
+  CheckoutEntry,
+  CheckoutStatus,
+  DailyRecord,
+  ThemePreference
+} from "@/types/checkInOut";
 
 const THEME_SWITCH: ThemePreference[] = ["light", "dark", "system"];
 
@@ -142,8 +142,8 @@ type CheckInState = {
   themePreference: ThemePreference;
   setThemePreference: (t: ThemePreference) => void;
   cycleTheme: () => void;
-  saveMorning: (date: string, data: MorningEntry) => void;
-  saveEvening: (date: string, data: EveningEntry) => void;
+  saveCheckin: (date: string, data: CheckinEntry) => void;
+  saveCheckout: (date: string, data: CheckoutEntry) => void;
   getEntry: (date: string) => DailyRecord | undefined;
   getSortedDateKeys: () => string[];
 };
@@ -166,7 +166,7 @@ export const useZustandStore = create<CheckInState>()(
           const next = THEME_SWITCH[(i + 1) % THEME_SWITCH.length];
           return { themePreference: next };
         }),
-      saveMorning: (date, data) =>
+      saveCheckin: (date, data) =>
         set((s) => {
           const next = { ...s.entries };
           const prev = ensureRecord(next, date);
@@ -174,11 +174,11 @@ export const useZustandStore = create<CheckInState>()(
           next[date] = {
             ...prev,
             date,
-            morning: { ...data, checkedInAt: now },
+            Checkin: { ...data, checkedInAt: now },
           };
           return { entries: next };
         }),
-      saveEvening: (date, data) =>
+      saveCheckout: (date, data) =>
         set((s) => {
           const next = { ...s.entries };
           const prev = ensureRecord(next, date);
@@ -186,7 +186,7 @@ export const useZustandStore = create<CheckInState>()(
           next[date] = {
             ...prev,
             date,
-            evening: { ...data, checkedOutAt: now },
+            Checkout: { ...data, checkedOutAt: now },
           };
           return { entries: next };
         }),

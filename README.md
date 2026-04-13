@@ -1,4 +1,5 @@
 # SyncPulse
+
 SyncPulse is a React Native (Expo) mobile app for tracking daily employee productivity with check-in/check-out, goal tracking, history, streaks, and dark/light theme support.
 
 # Checksy — Daily check-in (Expo + React Native)
@@ -26,17 +27,17 @@ Stack: App
 
 ## Tabs
 
-| Tab | Role |
-| --- | --- |
-| **Home** | Streak, weekly bar, shortcut to check-in/out, today’s entry & exit summary |
+| Tab              | Role                                                                                                                                                                        |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Home**         | Streak, weekly bar, shortcut to check-in/out, today’s entry & exit summary                                                                                                  |
 | **Check-in/out** | One screen: **Entry** (project, goal, note) + **Exit** (work, status); each save stores **real time** (`checkedInAt` / `checkedOutAt` ISO timestamps) for that calendar day |
-| **History** | Progress + date-wise list; one entry & one exit per day; edit modal |
-| **Profile** | App name & version |
+| **History**      | Progress + date-wise list; one entry & one exit per day; edit modal                                                                                                         |
+| **Profile**      | App name & version                                                                                                                                                          |
 
 ## Data
 
 - Day key: `YYYY-MM-DD` (local calendar).
-- At most **one** morning record and **one** evening record per day (enforced by store).
+- At most **one** Checkin record and **one** Checkout record per day (enforced by store).
 - Timestamps set in the store on each successful save.
 
 ## Project layout

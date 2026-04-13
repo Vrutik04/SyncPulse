@@ -1,13 +1,12 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { checkInPersistStorage } from "@/lib/persistStorage";
 import type {
+  CheckinEntry,
+  CheckoutEntry,
   DailyRecord,
-  EveningEntry,
-  MorningEntry,
   ThemePreference,
-} from "@/types/checkIn";
-
+} from "@/features/checkincheckout/types/Checkinout";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export type UserProfile = {
   name: string;
@@ -16,8 +15,8 @@ export type UserProfile = {
   ProfilePhoto: string | null;
 };
 
-//  Theme change 
-const ThemeOptions: ThemePreference[] = ["system","light", "dark"];
+//  Theme change
+const ThemeOptions: ThemePreference[] = ["system", "light", "dark"];
 
 type ZustandStore = {
   entries: Record<string, DailyRecord>;
@@ -26,8 +25,8 @@ type ZustandStore = {
   updateUserProfile: (profile: Partial<UserProfile>) => void;
   setTheme: (value: ThemePreference) => void;
   toggleTheme: () => void;
-  saveCheckIn: (date: string, data: MorningEntry) => void;
-  saveCheckOut: (date: string, data: EveningEntry) => void;
+  saveCheckIn: (date: string, data: CheckinEntry) => void;
+  saveCheckOut: (date: string, data: CheckoutEntry) => void;
   getEntry: (date: string) => DailyRecord | undefined;
   getAllDates: () => string[];
 };
@@ -70,10 +69,10 @@ export const useZustandStore = create<ZustandStore>()(
               [date]: {
                 ...existing,
                 date,
-                morning: {
+                Checkin: {
                   ...data,
                   checkedInAt:
-                    existing.morning?.checkedInAt || new Date().toISOString(),
+                    existing.Checkin?.checkedInAt || new Date().toISOString(),
                 },
               },
             },
@@ -91,10 +90,10 @@ export const useZustandStore = create<ZustandStore>()(
               [date]: {
                 ...existing,
                 date,
-                evening: {
+                Checkout: {
                   ...data,
                   checkedOutAt:
-                    existing.evening?.checkedOutAt || new Date().toISOString(),
+                    existing.Checkout?.checkedOutAt || new Date().toISOString(),
                 },
               },
             },

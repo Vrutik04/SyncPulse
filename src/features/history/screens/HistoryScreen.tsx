@@ -2,25 +2,24 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
+    Alert,
+    FlatList,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 
-import { CheckinInputs } from "@/components/forms/CheckinInputs";
-import { CheckoutInputs } from "@/components/forms/CheckoutInputs";
-import { PrimaryButton } from "@/components/PrimaryButton";
-import { ScreenContainer } from "@/components/ScreenContainer";
-import { StatusIndicator } from "@/components/StatusIndicator";
-import { WeeklyDots } from "@/components/WeeklyDots";
-import type { WorkItem } from "@/types/checkIn";
-
-import { formatDisplayDate, formatTime } from "@/lib/date";
+import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
+import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
+import { PrimaryButton } from "@/shared/components/PrimaryButton";
+import { ScreenContainer } from "@/shared/components/ScreenContainer";
+import { StatusIndicator } from "@/shared/components/StatusIndicator";
+import { WeeklyDots } from "@/shared/components/WeeklyDots";
+import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
 import { computeStreak, weeklyCompletionCount } from "@/lib/stats";
+import { formatDisplayDate, formatTime } from "@/shared/utils/date";
 import { useZustandStore } from "@/store/useZustandStore";
 
 // Types
@@ -33,13 +32,13 @@ type FormState = {
 
 type ModalState = {
   selectedDate: string | null;
-  editType: "morning" | "evening" | null;
+  editType: "Checkin" | "Checkout" | null;
 };
 
 export const HistoryScreen = () => {
   const entries = useZustandStore((state) => state.entries);
-  const saveMorning = useZustandStore((state) => state.saveCheckIn);
-  const saveEvening = useZustandStore((state) => state.saveCheckOut);
+  const saveCheckin = useZustandStore((state) => state.saveCheckIn);
+  const saveCheckout = useZustandStore((state) => state.saveCheckOut);
 
   // Today's date string
   const todayObj = new Date();
@@ -47,7 +46,8 @@ export const HistoryScreen = () => {
 
   const [activeDate, setActiveDate] = useState(todayDate);
   const [calendarDates, setCalendarDates] = useState<string[]>([]);
-  const flatListRef = useRef<FlatList>(null);
+  // calendarDates is string[], so FlatList item type is string
+  const flatListRef = useRef<FlatList<string>>(null);
 
   // Object state
   const [form, setForm] = useState<FormState>({
@@ -62,11 +62,14 @@ export const HistoryScreen = () => {
     editType: null,
   });
 
-  const updateForm = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+  const updateForm = <K extends keyof FormState>(
+    key: K,
+    value: FormState[K],
+  ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const openModal = (date: string, type: "morning" | "evening") => {
+  const openModal = (date: string, type: "Checkin" | "Checkout") => {
     setModal({ selectedDate: date, editType: type });
   };
 
@@ -98,7 +101,10 @@ export const HistoryScreen = () => {
     }, [todayDate]),
   );
 
-  const getItemLayout = (data: any, index: number) => ({
+  const getItemLayout = (
+    _data: ArrayLike<string> | null | undefined,
+    index: number,
+  ) => ({
     length: 76,
     offset: 76 * index,
     index,
@@ -112,18 +118,18 @@ export const HistoryScreen = () => {
   useEffect(() => {
     if (!modal.selectedDate || !modal.editType) return;
     const record = entries[modal.selectedDate];
-    if (modal.editType === "morning") {
-      updateForm("projectName", record?.morning?.projectName || "");
-      updateForm("goal", record?.morning?.goal || "");
-      updateForm("note", record?.morning?.note || "");
+    if (modal.editType === "Checkin") {
+      updateForm("projectName", record?.Checkin?.projectName || "");
+      updateForm("goal", record?.Checkin?.goal || "");
+      updateForm("note", record?.Checkin?.note || "");
     } else {
-      if (record?.evening?.works && record.evening.works.length > 0) {
-        updateForm("works", record.evening.works);
-      } else if (record?.evening?.workCompleted) {
+      if (record?.Checkout?.works && record.Checkout.works.length > 0) {
+        updateForm("works", record.Checkout.works);
+      } else if (record?.Checkout?.workCompleted) {
         updateForm("works", [
           {
-            text: record.evening.workCompleted,
-            status: record.evening.status || "completed",
+            text: record.Checkout.workCompleted,
+            status: record.Checkout.status || "completed",
           },
         ]);
       } else {
@@ -133,13 +139,18 @@ export const HistoryScreen = () => {
   }, [modal.selectedDate, modal.editType]);
 
   const handleSave = () => {
-    if (!modal.selectedDate || !modal.editType || modal.selectedDate !== todayDate) return;
-    if (modal.editType === "morning") {
+    if (
+      !modal.selectedDate ||
+      !modal.editType ||
+      modal.selectedDate !== todayDate
+    )
+      return;
+    if (modal.editType === "Checkin") {
       if (form.projectName.trim() === "" || form.goal.trim() === "") {
         Alert.alert("Error", "Enter project and goal");
         return;
       }
-      saveMorning(modal.selectedDate, {
+      saveCheckin(modal.selectedDate, {
         projectName: form.projectName.trim(),
         goal: form.goal.trim(),
         note: form.note.trim(),
@@ -150,7 +161,7 @@ export const HistoryScreen = () => {
         Alert.alert("Error", "Enter at least one work completed");
         return;
       }
-      saveEvening(modal.selectedDate, {
+      saveCheckout(modal.selectedDate, {
         works: validWorks.map((w) => ({
           text: w.text.trim(),
           status: w.status,
@@ -166,7 +177,6 @@ export const HistoryScreen = () => {
 
   return (
     <ScreenContainer title="History" subtitle="Your entries by date">
-
       {/* Calendar strip */}
       <View className="mb-5 border-b border-ink-200 dark:border-ink-800 pb-2">
         <FlatList
@@ -178,7 +188,9 @@ export const HistoryScreen = () => {
           getItemLayout={getItemLayout}
           renderItem={({ item: dateStr }) => {
             const day = new Date(dateStr);
-            const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day.getDay()];
+            const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+              day.getDay()
+            ];
             const dayNum = day.getDate();
             const isSelected = dateStr === activeDate;
             const isToday = dateStr === todayDate;
@@ -234,12 +246,14 @@ export const HistoryScreen = () => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* Selected date data */}
         <View className="mb-4 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-2xl p-4 shadow-sm">
           <Text className="font-bold text-lg mb-4 text-ink-900 dark:text-ink-50">
-            {formatDisplayDate(activeDate)} {isTodaySelected && (
-              <Text className="text-clay dark:text-clay-muted text-sm font-semibold">(Today)</Text>
+            {formatDisplayDate(activeDate)}{" "}
+            {isTodaySelected && (
+              <Text className="text-clay dark:text-clay-muted text-sm font-semibold">
+                (Today)
+              </Text>
             )}
           </Text>
 
@@ -247,37 +261,41 @@ export const HistoryScreen = () => {
           <View className="mb-4 bg-ink-50 dark:bg-ink-800 p-4 rounded-xl border border-ink-100 dark:border-ink-700">
             <View className="flex-row justify-between items-center mb-3">
               <Text className="text-sm font-bold text-ink-400 dark:text-ink-500 uppercase tracking-widest">
-                Check In
+                Checkin
               </Text>
-              {work?.morning ? (
-                <Pressable onPress={() => openModal(activeDate, "morning")}>
+              {work?.Checkin ? (
+                <Pressable onPress={() => openModal(activeDate, "Checkin")}>
                   <Text className="text-clay dark:text-clay-muted font-semibold">
                     {isTodaySelected ? "Edit" : "View"}
                   </Text>
                 </Pressable>
               ) : (
                 isTodaySelected && (
-                  <Pressable onPress={() => openModal(activeDate, "morning")}>
-                    <Text className="text-clay dark:text-clay-muted font-semibold">Add</Text>
+                  <Pressable onPress={() => openModal(activeDate, "Checkin")}>
+                    <Text className="text-clay dark:text-clay-muted font-semibold">
+                      Add
+                    </Text>
                   </Pressable>
                 )
               )}
             </View>
 
-            {work?.morning ? (
+            {work?.Checkin ? (
               <View>
                 <Text className="font-semibold text-ink-900 dark:text-ink-50 text-base mb-1">
-                  {work.morning.projectName}
+                  {work.Checkin.projectName}
                 </Text>
                 <Text className="text-ink-600 dark:text-ink-300 leading-5 mb-2">
-                  {work.morning.goal}
+                  {work.Checkin.goal}
                 </Text>
                 <Text className="text-xs text-ink-400 dark:text-ink-500 font-medium">
-                  {formatTime(work.morning.checkedInAt)}
+                  {formatTime(work.Checkin.checkedInAt)}
                 </Text>
               </View>
             ) : (
-              <Text className="text-ink-400 dark:text-ink-500 text-sm">No check-in data</Text>
+              <Text className="text-ink-400 dark:text-ink-500 text-sm">
+                No check-in data
+              </Text>
             )}
           </View>
 
@@ -287,53 +305,59 @@ export const HistoryScreen = () => {
               <Text className="text-sm font-bold text-ink-400 dark:text-ink-500 uppercase tracking-widest">
                 Check Out
               </Text>
-              {work?.evening ? (
-                <Pressable onPress={() => openModal(activeDate, "evening")}>
+              {work?.Checkout ? (
+                <Pressable onPress={() => openModal(activeDate, "Checkout")}>
                   <Text className="text-clay dark:text-clay-muted font-semibold">
                     {isTodaySelected ? "Edit" : "View"}
                   </Text>
                 </Pressable>
               ) : (
                 isTodaySelected && (
-                  <Pressable onPress={() => openModal(activeDate, "evening")}>
-                    <Text className="text-clay dark:text-clay-muted font-semibold">Add</Text>
+                  <Pressable onPress={() => openModal(activeDate, "Checkout")}>
+                    <Text className="text-clay dark:text-clay-muted font-semibold">
+                      Add
+                    </Text>
                   </Pressable>
                 )
               )}
             </View>
 
-            {work?.evening ? (
-              <View>
-                {work.evening.works && work.evening.works.length > 0 ? (
-                  work.evening.works.map((w, idx) => (
-                    <View
-                      key={idx}
-                      className="flex-row justify-between items-start mb-2 mt-1"
-                    >
-                      <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
-                        {w.text}
-                      </Text>
-                      <View className="ml-2">
-                        <StatusIndicator status={w.status} />
-                      </View>
+            {work?.Checkout ? (
+                <View>
+                {work.Checkout.works && work.Checkout.works.length > 0 ? (
+                  work.Checkout.works.map((w: WorkItem, idx: number) => (
+                  <View
+                    key={idx}
+                    className="flex-row justify-between items-start mb-2 mt-1"
+                  >
+                    <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
+                    {w.text}
+                    </Text>
+                    <View className="ml-2">
+                    <StatusIndicator status={w.status} />
                     </View>
+                  </View>
                   ))
                 ) : (
                   <View className="flex-row justify-between items-start mb-2 mt-1">
-                    <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
-                      {work.evening.workCompleted}
-                    </Text>
-                    <View className="ml-2">
-                      <StatusIndicator status={work.evening.status || "completed"} />
-                    </View>
+                  <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
+                    {work.Checkout.workCompleted as string}
+                  </Text>
+                  <View className="ml-2">
+                    <StatusIndicator
+                    status={work.Checkout.status || "completed"}
+                    />
+                  </View>
                   </View>
                 )}
                 <Text className="text-xs text-ink-400 dark:text-ink-500 font-medium mt-1">
-                  {formatTime(work.evening.checkedOutAt)}
+                  {formatTime(work.Checkout.checkedOutAt)}
                 </Text>
-              </View>
+                </View>
             ) : (
-              <Text className="text-ink-400 dark:text-ink-500 text-sm">No check-out data</Text>
+              <Text className="text-ink-400 dark:text-ink-500 text-sm">
+                No check-out data
+              </Text>
             )}
           </View>
         </View>
@@ -344,13 +368,17 @@ export const HistoryScreen = () => {
             Your Progress
           </Text>
           <View className="flex-row justify-between mb-3">
-            <Text className="text-ink-600 dark:text-ink-300">Current Streak</Text>
+            <Text className="text-ink-600 dark:text-ink-300">
+              Current Streak
+            </Text>
             <Text className="font-semibold text-clay dark:text-clay-muted">
               🔥 {streak} days
             </Text>
           </View>
           <View className="flex-row justify-between mb-4">
-            <Text className="text-ink-600 dark:text-ink-300">Total Check-Ins</Text>
+            <Text className="text-ink-600 dark:text-ink-300">
+              Total Check-Ins
+            </Text>
             <Text className="font-semibold text-ink-800 dark:text-ink-100">
               {dates.length} days
             </Text>
@@ -362,29 +390,26 @@ export const HistoryScreen = () => {
       {/* Edit / View Modal */}
       <Modal visible={modal.selectedDate !== null} animationType="slide">
         <View className="flex-1 px-5 pt-12 pb-5 bg-paper dark:bg-ink-950">
-
           {/* Modal header */}
-          <View
-            style={{ backgroundColor: "#c45c3e" }}
-            className="rounded-2xl px-5 py-4 mb-6 flex-row items-center"
-          >
-            <Text className="text-white text-xl font-bold flex-1">
+          <View className="rounded-2xl  py-2  flex-row  items-center ">
+            <Text className="text-orange-500 text-2xl font-bold flex-1 ">
               {modal.selectedDate === todayDate
-                ? modal.editType === "morning"
+                ? modal.editType === "Checkin"
                   ? "Edit Check-in"
                   : "Edit Check-out"
-                : modal.editType === "morning"
+                : modal.editType === "Checkin"
                   ? "View Check-in"
                   : "View Check-out"}
-            </Text>
-            <Text className="text-white/70 text-sm">
-              {modal.selectedDate ? formatDisplayDate(modal.selectedDate) : ""}
             </Text>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            {modal.editType === "morning" && (
-              <View pointerEvents={modal.selectedDate === todayDate ? "auto" : "none"}>
+            {modal.editType === "Checkin" && (
+              <View
+                pointerEvents={
+                  modal.selectedDate === todayDate ? "auto" : "none"
+                }
+              >
                 <CheckinInputs
                   projectName={form.projectName}
                   onProjectNameChange={(val) => updateForm("projectName", val)}
@@ -396,7 +421,7 @@ export const HistoryScreen = () => {
               </View>
             )}
 
-            {modal.editType === "evening" && (
+            {modal.editType === "Checkout" && (
               <View>
                 {modal.selectedDate === todayDate ? (
                   <CheckoutInputs

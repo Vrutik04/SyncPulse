@@ -1,4 +1,4 @@
-import type { CheckoutStatus } from "@/types/checkIn";
+import type { CheckoutStatus } from "@/src/features/checkincheckout/types/Checkinout";
 import { Text, View } from "react-native";
 
 const config: Record<
@@ -30,13 +30,13 @@ type StatusIndicator = {
 export const StatusIndicator = ({ status, size = "md" }: StatusIndicator) => {
   const c = config[status];
   const pad = size === "sm" ? "px-2 py-0.5" : "px-3 py-1";
-  const textSize = size === "sm" ? "text-xs font-semibold" : "text-sm font-semibold";
+  const textSize =
+    size === "sm" ? "text-xs font-semibold" : "text-sm font-semibold";
   return (
     <View
       className={`self-start rounded-full border ${pad} ${c.light} ${c.dark}`}
     >
       <Text className={textSize}>{c.label}</Text>
     </View>
-    
   );
 };

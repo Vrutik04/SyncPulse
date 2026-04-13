@@ -1,7 +1,7 @@
 export type CheckoutStatus = "completed" | "partial" | "blocked";
 
-// Saved when you submit check-in 
-export type MorningEntry = {
+// Saved when you submit check-in
+export type CheckinEntry = {
   projectName: string;
   goal: string;
   note?: string;
@@ -13,8 +13,8 @@ export type WorkItem = {
   status: CheckoutStatus;
 };
 
-//Saved when you submit check-out  
-export type EveningEntry = {
+//Saved when you submit check-out
+export type CheckoutEntry = {
   works?: WorkItem[];
   workCompleted?: string;
   status?: CheckoutStatus;
@@ -23,8 +23,8 @@ export type EveningEntry = {
 
 export type DailyRecord = {
   date: string;
-  morning?: MorningEntry;
-  evening?: EveningEntry;
+  Checkin?: CheckinEntry;
+  Checkout?: CheckoutEntry;
 };
 
-export type ThemePreference = "system"|"light" | "dark" ;
+export type ThemePreference = "system" | "light" | "dark";

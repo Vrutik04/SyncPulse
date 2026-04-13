@@ -33,3 +33,4 @@ const webLocalStorage = (): StateStorage => ({
 export const checkInPersistStorage = createJSONStorage(() =>
   Platform.OS === "web" ? webLocalStorage() : AsyncStorage
 );
+

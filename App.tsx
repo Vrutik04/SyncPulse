@@ -1,5 +1,5 @@
 import { RootNavigator } from "@/navigation/RootNavigator";
-import { useZustandStore } from "@/store/useZustandStore";
+import { useZustandStore as useDailyRecordsStore } from "@/store/useZustandStore";
 import {
   DarkTheme,
   DefaultTheme,
@@ -15,7 +15,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
 
 const App = () => {
-  const theme = useZustandStore((s) => s.theme);
+  const theme = useDailyRecordsStore((s) => s.theme);
   const systemScheme = useRnColorScheme();
   const { setColorScheme } = useColorScheme();
 
@@ -26,13 +26,13 @@ const App = () => {
     } else {
       Appearance.setColorScheme(theme);
     }
-  }, [theme]);
+  }, [theme, setColorScheme]);
 
   const isDark =
     theme === "dark" || (theme === "system" && systemScheme === "dark");
 
   const navTheme = isDark ? DarkTheme : DefaultTheme;
-  const Theme = {
+  const appTheme = {
     ...navTheme,
     colors: {
       ...navTheme.colors,
@@ -47,7 +47,7 @@ const App = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer theme={Theme}>
+        <NavigationContainer theme={appTheme}>
           <StatusBar style={isDark ? "light" : "dark"} />
           <RootNavigator />
         </NavigationContainer>

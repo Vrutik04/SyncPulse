@@ -1,4 +1,4 @@
-import type { CheckoutStatus, WorkItem } from "@/types/checkIn";
+import type { CheckoutStatus, WorkItem } from "@/features/checkincheckout/types/Checkinout";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 type CheckoutInputs = {
@@ -20,11 +20,12 @@ const statusLabels: Record<CheckoutStatus, string> = {
 };
 
 // Colors for each status badge when active
-const statusActiveStyle: Record<CheckoutStatus, { bg: string; text: string }> = {
-  completed: { bg: "#16a34a1a", text: "#16a34a" },
-  partial: { bg: "#d97706'1a", text: "#d97706" },
-  blocked: { bg: "#dc26261a", text: "#dc2626" },
-};
+const statusActiveStyle: Record<CheckoutStatus, { bg: string; text: string }> =
+  {
+    completed: { bg: "#16a34a1a", text: "#16a34a" },
+    partial: { bg: "#d97706'1a", text: "#d97706" },
+    blocked: { bg: "#dc26261a", text: "#dc2626" },
+  };
 
 export const CheckoutInputs = ({ works, onWorksChange }: CheckoutInputs) => {
   const handleTextChange = (text: string, index: number) => {

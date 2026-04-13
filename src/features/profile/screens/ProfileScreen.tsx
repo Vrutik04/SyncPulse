@@ -1,16 +1,16 @@
-import { ScreenContainer } from "@/components/ScreenContainer";
+import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 
 import { computeStreak } from "@/lib/stats";
@@ -42,7 +42,7 @@ export const ProfileScreen = () => {
   const { entries, userProfile, updateUserProfile } = useZustandStore();
 
   const streak = computeStreak(entries);
-  const totalCheckins = Object.values(entries).filter((e) => e.morning).length;
+  const totalCheckins = Object.values(entries).filter((e) => e.Checkin).length;
 
   // State
   const [form, setForm] = useState<FormState>({
@@ -57,7 +57,10 @@ export const ProfileScreen = () => {
     errors: {},
   });
 
-  const updateForm = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+  const updateForm = <K extends keyof FormState>(
+    key: K,
+    value: FormState[K],
+  ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -77,7 +80,8 @@ export const ProfileScreen = () => {
   };
 
   const handlePickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
       alert("Permission to access camera roll is required!");
       return;
@@ -108,10 +112,8 @@ export const ProfileScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
-
         {/* ── User hero card ── */}
         <View className="mb-6 items-center px-4 pt-6 pb-8 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-3xl shadow-sm">
-
           {/* Avatar */}
           <Pressable onPress={handlePickImage} className="relative">
             <View className="h-28 w-28 rounded-full bg-clay/10 dark:bg-clay/20 items-center justify-center border-4 border-clay/30 dark:border-clay/40 overflow-hidden">
@@ -150,7 +152,6 @@ export const ProfileScreen = () => {
 
         {/* ── Stats row ── */}
         <View className="mb-6 flex-row gap-3">
-
           {/* Streak */}
           <View className="flex-1 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-3xl p-5 shadow-sm items-center">
             <View className="h-12 w-12 rounded-full bg-clay/10 dark:bg-clay/20 items-center justify-center mb-3">
@@ -180,7 +181,6 @@ export const ProfileScreen = () => {
 
         {/* ── Settings menu ── */}
         <View className="mb-6 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-3xl p-2 shadow-sm">
-
           {/* Edit Profile */}
           <Pressable
             onPress={openEditModal}
@@ -203,7 +203,11 @@ export const ProfileScreen = () => {
           {/* Notifications */}
           <Pressable className="flex-row items-center p-3 border-b border-ink-100 dark:border-ink-800">
             <View className="w-12 h-12 rounded-full bg-clay/10 dark:bg-clay/20 items-center justify-center mr-4">
-              <Ionicons name="notifications-outline" size={22} color="#c45c3e" />
+              <Ionicons
+                name="notifications-outline"
+                size={22}
+                color="#c45c3e"
+              />
             </View>
             <View className="flex-1">
               <Text className="text-base font-semibold text-ink-900 dark:text-ink-50">
@@ -219,7 +223,11 @@ export const ProfileScreen = () => {
           {/* Security */}
           <Pressable className="flex-row items-center p-3">
             <View className="w-12 h-12 rounded-full bg-clay/10 dark:bg-clay/20 items-center justify-center mr-4">
-              <Ionicons name="shield-checkmark-outline" size={22} color="#c45c3e" />
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={22}
+                color="#c45c3e"
+              />
             </View>
             <View className="flex-1">
               <Text className="text-base font-semibold text-ink-900 dark:text-ink-50">
@@ -236,14 +244,18 @@ export const ProfileScreen = () => {
         {/* ── App Info box ── */}
         <View className="rounded-3xl border border-ink-200 dark:border-ink-700 bg-ink-50 dark:bg-ink-800 p-6 shadow-sm">
           <View className="flex-row items-center mb-3">
-            <Ionicons name="information-circle-outline" size={20} color="#a8aebc" />
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color="#a8aebc"
+            />
             <Text className="text-xs font-bold text-ink-400 dark:text-ink-500 uppercase tracking-widest ml-2">
               App Info
             </Text>
           </View>
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-lg font-bold text-ink-900 dark:text-ink-50">
-              Checksy
+              SyncPulse
             </Text>
             <View className="bg-white dark:bg-ink-700 border border-ink-200 dark:border-ink-600 px-3 py-1 rounded-full">
               <Text className="text-xs font-bold text-ink-500 dark:text-ink-300">
@@ -256,7 +268,6 @@ export const ProfileScreen = () => {
             all your daily progress in one beautiful place.
           </Text>
         </View>
-
       </ScrollView>
 
       {/* ── Edit Profile Modal ── */}
@@ -268,7 +279,6 @@ export const ProfileScreen = () => {
       >
         <View className="flex-1 justify-end bg-black/60">
           <View className="bg-white dark:bg-ink-900 rounded-t-3xl p-6 h-[80%] shadow-lg">
-
             {/* Modal header */}
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-2xl font-bold text-ink-900 dark:text-ink-50">
@@ -286,7 +296,6 @@ export const ProfileScreen = () => {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 20 }}
             >
-
               {/* Full Name */}
               <View className="mb-4">
                 <Text className="text-sm font-semibold text-ink-700 dark:text-ink-300 mb-2">
@@ -340,7 +349,6 @@ export const ProfileScreen = () => {
                   Save Changes
                 </Text>
               </Pressable>
-
             </ScrollView>
           </View>
         </View>

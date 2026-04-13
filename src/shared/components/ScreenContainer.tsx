@@ -1,4 +1,4 @@
-import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { ThemeToggleButton } from "@/shared/components/ThemeToggleButton";
 import { DrawerToggleButton } from "@react-navigation/drawer";
 import { useTheme } from "@react-navigation/native";
 import type { ReactNode } from "react";
@@ -30,7 +30,7 @@ export const ScreenContainer = ({
       edges={["top", "left", "right"]}
     >
       <View
-        className="flex-1 px-5"
+        className="flex-1 px-5 pt-3 "
       
       >
         <View className="flex-row items-start gap-2 border-b border-ink-200/90 pb-5 pt-1 dark:border-ink-800/90">
@@ -40,7 +40,7 @@ export const ScreenContainer = ({
             </View>
           ) : null}
           <View className="min-w-0 flex-1 pr-1">
-            <Text className="text-2xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">
+            <Text className="text-xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">
               {title}
             </Text>
             {subtitle ? (

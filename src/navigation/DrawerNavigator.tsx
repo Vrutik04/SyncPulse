@@ -1,5 +1,5 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { AppDrawerContent } from "@/navigation/AppDrawerContent";
+import { AppDrawerContent } from "@/navigation/AppDrawerNavigator";
 import type { DrawerParamList } from "@/navigation/types";
 import { TabNavigator } from "@/navigation/TabNavigator";
 

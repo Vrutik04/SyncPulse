@@ -1,5 +1,5 @@
 import { useZustandStore } from "@/store/useZustandStore";
-import type { ThemePreference } from "@/types/checkIn";
+import type { ThemePreference } from "@/src/features/checkincheckout/types/Checkinout";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Pressable } from "react-native";
