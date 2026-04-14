@@ -1,6 +1,6 @@
 import { DateTimeCard } from "@/features/checkincheckout/components/DateTimeCard";
 import { MissedCheckoutModal } from "@/features/checkincheckout/components/MissedCheckoutModal";
-import { isMissedCheckout } from "@/lib/missedCheckout";
+import { isMissedCheckout } from "@/shared/utils/missedCheckout";
 import type { HomeScreenNavigationProp } from "@/navigation/types";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { formatDisplayDate, formatTime, getDateKey } from "@/shared/utils/date";

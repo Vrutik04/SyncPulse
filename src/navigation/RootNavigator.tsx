@@ -1,14 +1,34 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "@/navigation/types";
 import { DrawerNavigator } from "@/navigation/DrawerNavigator";
-
+import { AuthNavigator } from "@/navigation/AuthNavigator";
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
+import { useAuthListener } from "@/features/authentication/hooks/useAuthListener";
+import { ActivityIndicator, View } from "react-native";
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator = () => {
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  
+  useAuthListener();
+
+  if (isLoading && user === null) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#fff", justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#c45c3e" />
+      </View>
+    );
+  }
+
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      <RootStack.Screen name="App" component={DrawerNavigator} />
+      {user ? (
+        <RootStack.Screen name="App" component={DrawerNavigator} />
+      ) : (
+        <RootStack.Screen name="Auth" component={AuthNavigator} />
+      )}
     </RootStack.Navigator>
   );
 };
