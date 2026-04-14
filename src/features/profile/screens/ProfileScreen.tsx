@@ -68,8 +68,6 @@ export const ProfileScreen = () => {
     setUI((prev) => ({ ...prev, [key]: value }));
   };
 
-  const isValid = form.name.trim().length > 0 && form.email.includes("@");
-
   const handleSave = () => {
     updateUserProfile({
       name: form.name,
@@ -150,7 +148,7 @@ export const ProfileScreen = () => {
           </Text>
         </View>
 
-        {/* ── Stats row ── */}
+        {/*  Stats row */}
         <View className="mb-6 flex-row gap-3">
           {/* Streak */}
           <View className="flex-1 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-3xl p-5 shadow-sm items-center">
@@ -179,7 +177,7 @@ export const ProfileScreen = () => {
           </View>
         </View>
 
-        {/* ── Settings menu ── */}
+        {/* Settings menu */}
         <View className="mb-6 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-3xl p-2 shadow-sm">
           {/* Edit Profile */}
           <Pressable

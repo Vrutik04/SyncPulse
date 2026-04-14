@@ -2,23 +2,23 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Modal,
-    Pressable,
-    ScrollView,
-    Text,
-    View,
+  Alert,
+  FlatList,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
 
 import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
 import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
+import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
+import { computeStreak, weeklyCompletionCount } from "@/lib/stats";
 import { PrimaryButton } from "@/shared/components/PrimaryButton";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { StatusIndicator } from "@/shared/components/StatusIndicator";
 import { WeeklyDots } from "@/shared/components/WeeklyDots";
-import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
-import { computeStreak, weeklyCompletionCount } from "@/lib/stats";
 import { formatDisplayDate, formatTime } from "@/shared/utils/date";
 import { useZustandStore } from "@/store/useZustandStore";
 
@@ -46,7 +46,6 @@ export const HistoryScreen = () => {
 
   const [activeDate, setActiveDate] = useState(todayDate);
   const [calendarDates, setCalendarDates] = useState<string[]>([]);
-  // calendarDates is string[], so FlatList item type is string
   const flatListRef = useRef<FlatList<string>>(null);
 
   // Object state
@@ -168,7 +167,9 @@ export const HistoryScreen = () => {
         })),
       });
     }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert("Success", "Task updated!");
     closeModal();
   };
 
@@ -323,37 +324,37 @@ export const HistoryScreen = () => {
             </View>
 
             {work?.Checkout ? (
-                <View>
+              <View>
                 {work.Checkout.works && work.Checkout.works.length > 0 ? (
                   work.Checkout.works.map((w: WorkItem, idx: number) => (
-                  <View
-                    key={idx}
-                    className="flex-row justify-between items-start mb-2 mt-1"
-                  >
-                    <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
-                    {w.text}
-                    </Text>
-                    <View className="ml-2">
-                    <StatusIndicator status={w.status} />
+                    <View
+                      key={idx}
+                      className="flex-row justify-between items-start mb-2 mt-1"
+                    >
+                      <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
+                        {w.text}
+                      </Text>
+                      <View className="ml-2">
+                        <StatusIndicator status={w.status} />
+                      </View>
                     </View>
-                  </View>
                   ))
                 ) : (
                   <View className="flex-row justify-between items-start mb-2 mt-1">
-                  <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
-                    {work.Checkout.workCompleted as string}
-                  </Text>
-                  <View className="ml-2">
-                    <StatusIndicator
-                    status={work.Checkout.status || "completed"}
-                    />
-                  </View>
+                    <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
+                      {work.Checkout.workCompleted as string}
+                    </Text>
+                    <View className="ml-2">
+                      <StatusIndicator
+                        status={work.Checkout.status || "completed"}
+                      />
+                    </View>
                   </View>
                 )}
                 <Text className="text-xs text-ink-400 dark:text-ink-500 font-medium mt-1">
                   {formatTime(work.Checkout.checkedOutAt)}
                 </Text>
-                </View>
+              </View>
             ) : (
               <Text className="text-ink-400 dark:text-ink-500 text-sm">
                 No check-out data
@@ -388,20 +389,21 @@ export const HistoryScreen = () => {
       </ScrollView>
 
       {/* Edit / View Modal */}
-      <Modal visible={modal.selectedDate !== null} animationType="slide">
-        <View className="flex-1 px-5 pt-12 pb-5 bg-paper dark:bg-ink-950">
-          {/* Modal header */}
-          <View className="rounded-2xl  py-2  flex-row  items-center ">
-            <Text className="text-orange-500 text-2xl font-bold flex-1 ">
-              {modal.selectedDate === todayDate
-                ? modal.editType === "Checkin"
-                  ? "Edit Check-in"
-                  : "Edit Check-out"
-                : modal.editType === "Checkin"
-                  ? "View Check-in"
-                  : "View Check-out"}
-            </Text>
-          </View>
+      <Modal visible={modal.selectedDate !== null} animationType="slide" transparent={true} onRequestClose={closeModal}>
+        <View className="flex-1 justify-end bg-black/40 dark:bg-black/60">
+          <View className="bg-paper dark:bg-ink-950 px-5 pt-6 pb-8 rounded-t-3xl" style={{ maxHeight: '90%' }}>
+            {/* Modal header */}
+            <View className="py-2 mb-4 items-center">
+              <Text className="text-clay dark:text-clay-muted text-2xl font-bold text-center">
+                {modal.selectedDate === todayDate
+                  ? modal.editType === "Checkin"
+                    ? "Edit Check-in"
+                    : "Edit Check-out"
+                  : modal.editType === "Checkin"
+                    ? "View Check-in"
+                    : "View Check-out"}
+              </Text>
+            </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {modal.editType === "Checkin" && (
@@ -461,6 +463,7 @@ export const HistoryScreen = () => {
               </Text>
             </Pressable>
           </ScrollView>
+          </View>
         </View>
       </Modal>
     </ScreenContainer>

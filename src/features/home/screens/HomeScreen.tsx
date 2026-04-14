@@ -14,8 +14,7 @@ export const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
 
   const today = getDateKey();
-  const entries = useZustandStore((state) => state.entries);
-  const todayEntry = entries[today];
+  const todayEntry = useZustandStore((state) => state.entries[today]);
 
   const isCheckinDone = !!todayEntry?.Checkin;
   const isCheckoutDone = !!todayEntry?.Checkout;
@@ -29,7 +28,8 @@ export const HomeScreen = () => {
   useEffect(() => {
     if (alreadyChecked.current) return;
     alreadyChecked.current = true;
-    if (isMissedCheckout(entries)) {
+    const currentEntries = useZustandStore.getState().entries;
+    if (isMissedCheckout(currentEntries)) {
       setShowModal(true);
     }
   }, []);
@@ -139,7 +139,7 @@ export const HomeScreen = () => {
         <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
       </Pressable>
 
-      {/* Today's summary */}
+      {/* Today's Activity */}
       <Text className="mb-2 text-xs text-ink-400 dark:text-ink-500 uppercase tracking-wider">
         Today
       </Text>

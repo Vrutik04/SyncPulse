@@ -1,18 +1,23 @@
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 
+type NoParams = undefined;
+
 export type RootStackParamList = {
-  App: undefined;
+  App: NoParams;
 };
 
 export type DrawerParamList = {
-  Main: undefined;
+  Main: NoParams;
 };
 
 export type TabParamList = {
-  Home: undefined;
-  CheckInOut: { tab?: "Checkin" | "Checkout" } | undefined;
-  History: undefined;
-  Profile: undefined;
+  Home: NoParams;
+  CheckInOut: { tab?: "Checkin" | "Checkout" } | NoParams;
+  History: NoParams;
+  Profile: NoParams;
 };
 
-export type HomeScreenNavigationProp = BottomTabNavigationProp<TabParamList, "Home">;
+export type HomeScreenNavigationProp = BottomTabNavigationProp<
+  TabParamList,
+  "Home"
+>;

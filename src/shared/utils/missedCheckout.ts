@@ -1,4 +1,4 @@
-import type { DailyRecord } from "@/features/checkin/types/Checkinout";
+import type { DailyRecord } from "@/features/checkincheckout/types/Checkinout";
 
 /**
  * Returns the date key for yesterday (YYYY-MM-DD).

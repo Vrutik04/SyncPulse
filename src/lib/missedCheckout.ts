@@ -1,17 +1,17 @@
 import type { DailyRecord } from "@/features/checkincheckout/types/Checkinout";
 
- // Returns the date for yesterday.
- 
+// Returns the date for yesterday.
+
 export const getYesterday = (): string => {
   const d = new Date();
   d.setDate(d.getDate() - 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-  //Returns true if yesterday had a Checkin but no Checkout.
- 
+//Returns true if yesterday had a Checkin but no Checkout.
+
 export const isMissedCheckout = (
-  entries: Record<string, DailyRecord>
+  entries: Record<string, DailyRecord>,
 ): boolean => {
   const yesterday = getYesterday();
   const entry = entries[yesterday];

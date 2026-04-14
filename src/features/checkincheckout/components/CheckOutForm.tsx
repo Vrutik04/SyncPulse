@@ -1,4 +1,7 @@
-import type { CheckoutStatus, WorkItem } from "@/features/checkincheckout/types/Checkinout";
+import type {
+    CheckoutStatus,
+    WorkItem,
+} from "@/features/checkincheckout/types/Checkinout";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 type CheckoutInputs = {

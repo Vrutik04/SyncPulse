@@ -1,4 +1,4 @@
-import type { DailyRecord } from "@/features/checkin/types/Checkinout";
+import type { DailyRecord } from "@/features/checkincheckout/types/Checkinout";
 
 export const computeStreak = (
   entries: Record<string, DailyRecord>

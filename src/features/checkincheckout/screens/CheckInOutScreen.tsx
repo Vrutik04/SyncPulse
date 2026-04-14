@@ -5,12 +5,12 @@ import { Alert, Pressable, Text, View } from "react-native";
 
 import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
 import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
+import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
 import { PrimaryButton } from "@/shared/components/PrimaryButton";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { SuccessBanner } from "@/shared/components/SuccessBanner";
 import { formatDisplayDate, getDateKey } from "@/shared/utils/date";
 import { useZustandStore } from "@/store/useZustandStore";
-import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
 
 // Types
 
@@ -113,6 +113,7 @@ export const CheckInOutScreen = ({ route }: Props) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     updateUI("checkInSuccess", true);
     setTimeout(() => updateUI("checkInSuccess", false), 2000);
+    Alert.alert("Success", todayEntry?.Checkin ? "Task updated!" : "Check in successfully!");
   };
 
   const handleCheckOut = () => {
@@ -130,6 +131,7 @@ export const CheckInOutScreen = ({ route }: Props) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     updateUI("checkOutSuccess", true);
     setTimeout(() => updateUI("checkOutSuccess", false), 2000);
+    Alert.alert("Success", todayEntry?.Checkout ? "Task updated!" : "Check out successfully!");
   };
 
   // Render
