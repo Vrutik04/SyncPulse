@@ -14,7 +14,7 @@ import {
 import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
 import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
 import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
-import { computeStreak, weeklyCompletionCount } from "@/lib/stats";
+import { computeStreak, weeklyCompletionCount } from "@/shared/utils/progress";
 import { PrimaryButton } from "@/shared/components/PrimaryButton";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { StatusIndicator } from "@/shared/components/StatusIndicator";

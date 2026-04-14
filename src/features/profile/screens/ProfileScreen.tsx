@@ -13,8 +13,9 @@ import {
     View,
 } from "react-native";
 
-import { computeStreak } from "@/lib/stats";
+import { computeStreak } from "@/shared/utils/progress";
 import { useZustandStore } from "@/store/useZustandStore";
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
 
 // App version
 const version =
@@ -40,6 +41,7 @@ type UIState = {
 
 export const ProfileScreen = () => {
   const { entries, userProfile, updateUserProfile } = useZustandStore();
+  const { logout } = useAuthStore();
 
   const streak = computeStreak(entries);
   const totalCheckins = Object.values(entries).filter((e) => e.Checkin).length;
@@ -266,6 +268,17 @@ export const ProfileScreen = () => {
             all your daily progress in one beautiful place.
           </Text>
         </View>
+
+        {/* ── Logout Button ── */}
+        <Pressable
+          onPress={logout}
+          className="mt-6 flex-row items-center justify-center p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-3xl active:opacity-80"
+        >
+          <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+          <Text className="text-red-500 font-bold ml-2 text-base">
+            Log Out
+          </Text>
+        </Pressable>
       </ScrollView>
 
       {/* ── Edit Profile Modal ── */}

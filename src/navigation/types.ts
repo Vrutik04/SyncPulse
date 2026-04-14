@@ -3,7 +3,14 @@ import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 type NoParams = undefined;
 
 export type RootStackParamList = {
+  Auth: NoParams;
   App: NoParams;
+};
+
+export type AuthStackParamList = {
+  Login: NoParams;
+  Signup: NoParams;
+  ForgotPassword: NoParams;
 };
 
 export type DrawerParamList = {
