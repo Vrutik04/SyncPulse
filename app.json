@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SyncPulse",
-    "slug": "checksy",
+    "slug": "SyncPulse",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon1.png",
@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.checksy"
+      "package": "com.anonymous.syncpulse"
     },
     "web": {
       "bundler": "metro",

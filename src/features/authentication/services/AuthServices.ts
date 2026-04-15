@@ -7,32 +7,32 @@ import {
 } from "firebase/auth";
 import { auth } from "@/features/authentication/config/Firebase";
 
-// 🔥 Centralized Error Handler
+//  Error Handler
 const getFirebaseErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     const msg = error.message;
 
-    if (msg.includes("auth/invalid-email")) {
+    if (msg.includes("invalid-email")) {
       return "Invalid email address";
     }
 
-    if (msg.includes("auth/user-not-found")) {
+    if (msg.includes("user-not-found")) {
       return "No account found with this email";
     }
 
-    if (msg.includes("auth/wrong-password")) {
+    if (msg.includes("wrong-password")) {
       return "Incorrect password";
     }
 
-    if (msg.includes("auth/email-already-in-use")) {
+    if (msg.includes("email-already-in-use")) {
       return "Email is already registered";
     }
 
-    if (msg.includes("auth/weak-password")) {
+    if (msg.includes("weak-password")) {
       return "Password must be at least 6 characters";
     }
 
-    if (msg.includes("auth/too-many-requests")) {
+    if (msg.includes("too-many-requests")) {
       return "Too many attempts. Try again later";
     }
 
@@ -42,7 +42,7 @@ const getFirebaseErrorMessage = (error: unknown): string => {
   return "Something went wrong. Please try again";
 };
 
-// 🔐 LOGIN
+//  LOGIN
 export const loginUser = async (
   email: string,
   password: string
@@ -55,7 +55,7 @@ export const loginUser = async (
   }
 };
 
-// 📝 SIGNUP
+//  SIGNUP
 export const signupUser = async (
   email: string,
   password: string
@@ -72,7 +72,7 @@ export const signupUser = async (
   }
 };
 
-// 🔁 RESET PASSWORD
+//  RESET PASSWORD
 export const resetUserPassword = async (email: string): Promise<void> => {
   try {
     await sendPasswordResetEmail(auth, email);
