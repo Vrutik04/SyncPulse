@@ -22,7 +22,12 @@ type ZustandStore = {
   entries: Record<string, DailyRecord>;
   theme: ThemePreference;
   userProfile: UserProfile;
+  profileSetupSeenByUid: Record<string, boolean>;
+  hasHydrated: boolean;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
+  markProfileSetupSeen: (uid: string) => void;
+  hasSeenProfileSetup: (uid: string) => boolean;
+  setHasHydrated: (value: boolean) => void;
   setTheme: (value: ThemePreference) => void;
   toggleTheme: () => void;
   saveCheckIn: (date: string, data: CheckinEntry) => void;
@@ -42,10 +47,21 @@ export const useZustandStore = create<ZustandStore>()(
         email: "user-email@gmail.com",
         ProfilePhoto: null,
       },
+      profileSetupSeenByUid: {},
+      hasHydrated: false,
       updateUserProfile: (data) =>
         set((state) => ({
           userProfile: { ...state.userProfile, ...data },
         })),
+      markProfileSetupSeen: (uid) =>
+        set((state) => ({
+          profileSetupSeenByUid: {
+            ...state.profileSetupSeenByUid,
+            [uid]: true,
+          },
+        })),
+      hasSeenProfileSetup: (uid) => Boolean(get().profileSetupSeenByUid[uid]),
+      setHasHydrated: (value) => set({ hasHydrated: value }),
 
       theme: "system",
       setTheme: (theme) => set({ theme }),
@@ -108,10 +124,14 @@ export const useZustandStore = create<ZustandStore>()(
     {
       name: "daily-checkin-storage",
       storage: checkInPersistStorage,
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
       partialize: (state) => ({
         entries: state.entries,
         theme: state.theme,
         userProfile: state.userProfile,
+        profileSetupSeenByUid: state.profileSetupSeenByUid,
       }),
     },
   ),
