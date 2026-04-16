@@ -4,6 +4,8 @@ import { DrawerNavigator } from "@/navigation/DrawerNavigator";
 import { AuthNavigator } from "@/navigation/AuthNavigator";
 import { useAuthStore } from "@/features/authentication/store/AuthStore";
 import { useAuthListener } from "@/features/authentication/hooks/useAuthListener";
+import { ProfileSetupModal } from "@/features/profile/components/ProfileSetupModal";
+import { useProfileSetupGate } from "@/features/profile/hooks/useProfileSetupGate";
 import { ActivityIndicator, View } from "react-native";
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -11,8 +13,9 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 export const RootNavigator = () => {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
-  
   useAuthListener();
+  const { hasHydrated, isProfileSetupVisible, closeProfileSetupModal } =
+    useProfileSetupGate({ user });
 
   if (isLoading && user === null) {
     return (
@@ -23,12 +26,20 @@ export const RootNavigator = () => {
   }
 
   return (
-    <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <RootStack.Screen name="App" component={DrawerNavigator} />
-      ) : (
-        <RootStack.Screen name="Auth" component={AuthNavigator} />
-      )}
-    </RootStack.Navigator>
+    <>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <RootStack.Screen name="App" component={DrawerNavigator} />
+        ) : (
+          <RootStack.Screen name="Auth" component={AuthNavigator} />
+        )}
+      </RootStack.Navigator>
+      <ProfileSetupModal
+        visible={Boolean(user) && hasHydrated && isProfileSetupVisible}
+        initialEmail={user?.email}
+        onComplete={closeProfileSetupModal}
+        onSkip={closeProfileSetupModal}
+      />
+    </>
   );
 };
