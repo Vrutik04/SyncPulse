@@ -25,9 +25,6 @@ export const useGoogleAuth = () => {
    
   }, [response]);
 
-  
-
-
   return {
     promptAsync,
     request,
