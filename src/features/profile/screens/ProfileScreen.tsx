@@ -272,10 +272,10 @@ export const ProfileScreen = () => {
         {/* ── Logout Button ── */}
         <Pressable
           onPress={logout}
-          className="mt-6 flex-row items-center justify-center p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-3xl active:opacity-80"
+          className="mt-6 flex-row items-center justify-center p-4 bg-orange-50 dark:bg-clay/20 border border-orange-100 dark:border-orange-900/30 rounded-3xl active:opacity-80"
         >
-          <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-          <Text className="text-red-500 font-bold ml-2 text-base">
+          <Ionicons name="log-out-outline" size={20} color="#c45c3e" />
+          <Text className="text-clay text-lg dark:text-clay-muted font-bold ml-2 text-base">
             Log Out
           </Text>
         </Pressable>
