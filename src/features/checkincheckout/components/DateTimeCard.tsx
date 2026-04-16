@@ -54,14 +54,14 @@ export const DateTimeCard = () => {
   }, []);
 
   return (
-    <View className="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-orange-900 p-4">
-      <Text className="text-xs text-ink-400 dark:text-ink-400 text-center uppercase tracking-widest mb-1">
+    <View className="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4">
+      <Text className="text-xs text-ink-400 dark:text-white text-center uppercase tracking-widest mb-1">
         Today
       </Text>
       <Text className="text-2xl font-bold text-clay dark:text-clay-muted text-center">
         {formatTime(currentTime)}
       </Text>
-      <Text className="text-sm font-semibold text-ink-500 dark:text-ink-400 text-center mt-1">
+      <Text className="text-sm font-semibold text-ink-500 dark:text-white text-center mt-1">
         {formatDate(currentTime)}
       </Text>
     </View>
