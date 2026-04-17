@@ -3,9 +3,10 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
+  deleteUser as deleteFirebaseUser,
   User,
 } from "firebase/auth";
-import { auth } from "@/features/authentication/config/Firebase";
+import { auth } from "@/config/firebase";
 
 //  Error Handler
 const getFirebaseErrorMessage = (error: unknown): string => {
@@ -85,6 +86,18 @@ export const resetUserPassword = async (email: string): Promise<void> => {
 export const logoutUser = async (): Promise<void> => {
   try {
     await signOut(auth);
+  } catch (error) {
+    throw new Error(getFirebaseErrorMessage(error));
+  }
+};
+
+// ❌ DELETE ACCOUNT
+export const deleteAccount = async (): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      await deleteFirebaseUser(user);
+    }
   } catch (error) {
     throw new Error(getFirebaseErrorMessage(error));
   }

@@ -1,7 +1,11 @@
-import { User } from "firebase/auth";
+export type AuthUser = {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+};
 
 export interface AuthState {
-  user: User | null;
+  authUser: AuthUser | null;
   isLoading: boolean;
   error: string | null;
 
@@ -9,8 +13,8 @@ export interface AuthState {
   signup: (email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
-  setUser: (user: User | null) => void;
-  setLoading: (value: boolean) => void;
+  deleteAccount: () => Promise<void>;
+  setAuthUser: (user: AuthUser | null) => void;
 }
 
 export interface LoginForm {

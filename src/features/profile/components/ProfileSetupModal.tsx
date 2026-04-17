@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@react-navigation/native";
 import { useZustandStore } from "@/store/useZustandStore";
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
 
 type ProfileSetupModalProps = {
   visible: boolean;
@@ -28,12 +29,13 @@ type ProfileSetupForm = {
 
 export const ProfileSetupModal = ({
   visible,
-  initialEmail,
   onComplete,
   onSkip,
 }: ProfileSetupModalProps) => {
   const { colors } = useTheme();
-  const { userProfile, updateUserProfile } = useZustandStore();
+  const user = useZustandStore((state) => state.user);
+  const updateUser = useZustandStore((state) => state.updateUser);
+  const authUser = useAuthStore((state) => state.authUser);
 
   const [form, setForm] = useState<ProfileSetupForm>({
     username: "",
@@ -51,30 +53,53 @@ export const ProfileSetupModal = ({
   useEffect(() => {
     if (!visible) return;
 
+    const authEmail = authUser?.email ?? "";
     setForm({
-      username: userProfile.name === "user" ? "" : userProfile.name,
-      email:
-        initialEmail ||
-        (userProfile.email === "user-email@gmail.com" ? "" : userProfile.email),
-      role: userProfile.position === "position/role" ? "" : userProfile.position,
+      username: user?.name ?? "",
+      email: authEmail,
+      role: user?.role ?? "",
     });
-  }, [initialEmail, userProfile.email, userProfile.name, userProfile.position, visible]);
+  }, [authUser?.email, user?.name, user?.role, visible]);
 
   const isSubmitDisabled = useMemo(() => {
-    return !form.username.trim() || !form.email.trim() || !form.role.trim();
-  }, [form.email, form.role, form.username]);
+    return !form.username.trim() || !form.email.trim();
+  }, [form.email, form.username]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (isSubmitDisabled) return;
 
-    updateUserProfile({
-      name: form.username.trim(),
-      email: form.email.trim(),
-      position: form.role.trim(),
-    });
+    const authEmail = authUser?.email?.trim();
+    if (!authUser || !authEmail) return;
 
-    Alert.alert("Profile Saved", "Your profile saved successfully.");
-    onComplete();
+    try {
+      await updateUser(authUser.uid, {
+        name: form.username.trim(),
+        email: authEmail,
+        role: form.role.trim(),
+      });
+
+      Alert.alert("Profile Saved", "Your profile saved successfully.");
+      onComplete();
+    } catch {
+      Alert.alert("Error", "Could not save profile. Please try again.");
+    }
+  };
+
+  const handleSkip = async () => {
+    const authEmail = authUser?.email?.trim();
+    if (authUser && authEmail) {
+      try {
+        await updateUser(authUser.uid, {
+          name: "User",
+          email: authEmail,
+          role: "",
+        });
+      } catch {
+        Alert.alert("Error", "Could not save default profile.");
+        return;
+      }
+    }
+    onSkip();
   };
 
   return (
@@ -125,9 +150,9 @@ export const ProfileSetupModal = ({
                 </Text>
                 <TextInput
                   value={form.email}
-                  onChangeText={(value) => updateFormField("email", value)}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={false}
                   placeholder="Enter your email"
                   placeholderTextColor="#a8aebc"
                   className="bg-ink-50 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-2xl px-4 py-3 text-ink-900 dark:text-ink-50"
@@ -141,11 +166,12 @@ export const ProfileSetupModal = ({
                 <TextInput
                   value={form.role}
                   onChangeText={(value) => updateFormField("role", value)}
-                  placeholder="E.g. Developer, Manager"
+                  placeholder="Enter your role"
                   placeholderTextColor="#a8aebc"
                   className="bg-ink-50 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-2xl px-4 py-3 text-ink-900 dark:text-ink-50"
                 />
               </View>
+
             </View>
 
             <Pressable
@@ -157,7 +183,7 @@ export const ProfileSetupModal = ({
               <Text className="text-white font-bold text-base">Submit Profile</Text>
             </Pressable>
 
-            <Pressable onPress={onSkip} className="mt-3 py-2 items-center">
+            <Pressable onPress={handleSkip} className="mt-3 py-2 items-center">
               <Text className="text-sm font-semibold text-ink-500 dark:text-ink-400">
                 Skip for now
               </Text>

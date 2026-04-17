@@ -1,24 +1,28 @@
+import { useNavigation } from "@react-navigation/native";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
-  ImageBackground,
   Image,
+  ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useState } from "react";
 import { useAuthStore } from "../store/AuthStore";
 import { getEmailError } from "../utils/AuthValidation";
-import { useNavigation } from "@react-navigation/native";
+import type { AuthStackParamList } from "@/navigation/types";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+type NavigationProp = NativeStackNavigationProp<AuthStackParamList>
 
 export default function ForgotPassword() {
   const { resetPassword, isLoading, error } = useAuthStore();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -88,7 +92,9 @@ export default function ForgotPassword() {
                 autoCapitalize="none"
               />
               {emailError && (
-                <Text className="text-red-500 mt-1 ml-2 text-sm">{emailError}</Text>
+                <Text className="text-red-500 mt-1 ml-2 text-sm">
+                  {emailError}
+                </Text>
               )}
             </View>
 
@@ -118,7 +124,7 @@ export default function ForgotPassword() {
               <Text className="text-gray-600 font-medium">
                 Remember your password?{" "}
               </Text>
-              <TouchableOpacity onPress={() => navigation.goBack()}>
+              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
                 <Text className="text-red-800 font-bold">Login</Text>
               </TouchableOpacity>
             </View>

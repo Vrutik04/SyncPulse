@@ -11,13 +11,14 @@ import { ActivityIndicator, View } from "react-native";
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator = () => {
-  const user = useAuthStore((state) => state.user);
+  const authUser = useAuthStore((state) => state.authUser);
   const isLoading = useAuthStore((state) => state.isLoading);
   useAuthListener();
-  const { hasHydrated, isProfileSetupVisible, closeProfileSetupModal } =
-    useProfileSetupGate({ user });
+  const { isProfileSetupVisible, closeProfileSetupModal } = useProfileSetupGate({
+    user: authUser,
+  });
 
-  if (isLoading && user === null) {
+  if (isLoading && authUser === null) {
     return (
       <View style={{ flex: 1, backgroundColor: "#fff", justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" color="#c45c3e" />
@@ -28,15 +29,15 @@ export const RootNavigator = () => {
   return (
     <>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
+        {authUser ? (
           <RootStack.Screen name="App" component={DrawerNavigator} />
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />
         )}
       </RootStack.Navigator>
       <ProfileSetupModal
-        visible={Boolean(user) && hasHydrated && isProfileSetupVisible}
-        initialEmail={user?.email}
+        visible={Boolean(authUser) && isProfileSetupVisible}
+        initialEmail={authUser?.email}
         onComplete={closeProfileSetupModal}
         onSkip={closeProfileSetupModal}
       />

@@ -1,33 +1,34 @@
-import { checkInPersistStorage } from "@/lib/persistStorage";
 import type {
   CheckinEntry,
   CheckoutEntry,
   DailyRecord,
   ThemePreference,
 } from "@/features/checkincheckout/types/Checkinout";
+import {
+  getUserProfile,
+  saveUserProfile,
+  syncUserProfile,
+  updateUserProfile as updateUserProfileService,
+  type UserProfile,
+} from "@/services/user.service";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
-export type UserProfile = {
-  name: string;
-  position: string;
-  email: string;
-  ProfilePhoto: string | null;
-};
-
-//  Theme change
 const ThemeOptions: ThemePreference[] = ["system", "light", "dark"];
 
 type ZustandStore = {
+  user: UserProfile | null;
+  isUserLoading: boolean;
   entries: Record<string, DailyRecord>;
   theme: ThemePreference;
-  userProfile: UserProfile;
-  profileSetupSeenByUid: Record<string, boolean>;
-  hasHydrated: boolean;
-  updateUserProfile: (profile: Partial<UserProfile>) => void;
-  markProfileSetupSeen: (uid: string) => void;
-  hasSeenProfileSetup: (uid: string) => boolean;
-  setHasHydrated: (value: boolean) => void;
+  setUser: (user: UserProfile | null) => void;
+  fetchUser: (userId: string) => Promise<UserProfile | null>;
+  createUser: (userId: string, data: UserProfile) => Promise<void>;
+  syncUserFromAuth: (
+    userId: string,
+    data: { name?: string | null; email?: string | null },
+  ) => Promise<UserProfile>;
+  updateUser: (userId: string, data: Partial<UserProfile>) => Promise<void>;
+  clearUser: () => void;
   setTheme: (value: ThemePreference) => void;
   toggleTheme: () => void;
   saveCheckIn: (date: string, data: CheckinEntry) => void;
@@ -36,103 +37,132 @@ type ZustandStore = {
   getAllDates: () => string[];
 };
 
-export const useZustandStore = create<ZustandStore>()(
-  persist(
-    (set, get) => ({
-      entries: {},
+export const useZustandStore = create<ZustandStore>((set, get) => ({
+  user: null,
+  isUserLoading: false,
+  entries: {},
+  theme: "system",
 
-      userProfile: {
-        name: "user",
-        position: "position/role",
-        email: "user-email@gmail.com",
-        ProfilePhoto: null,
-      },
-      profileSetupSeenByUid: {},
-      hasHydrated: false,
-      updateUserProfile: (data) =>
-        set((state) => ({
-          userProfile: { ...state.userProfile, ...data },
-        })),
-      markProfileSetupSeen: (uid) =>
-        set((state) => ({
-          profileSetupSeenByUid: {
-            ...state.profileSetupSeenByUid,
-            [uid]: true,
-          },
-        })),
-      hasSeenProfileSetup: (uid) => Boolean(get().profileSetupSeenByUid[uid]),
-      setHasHydrated: (value) => set({ hasHydrated: value }),
+  setUser: (user) => set({ user }),
 
-      theme: "system",
-      setTheme: (theme) => set({ theme }),
+  fetchUser: async (userId) => {
+    set({ isUserLoading: true });
+    try {
+      const profile = await getUserProfile(userId);
+      set({ user: profile });
+      return profile;
+    } catch (error) {
+      console.error("Failed to fetch user profile", error);
+      throw error;
+    } finally {
+      set({ isUserLoading: false });
+    }
+  },
 
-      //  Toggle theme
-      toggleTheme: () =>
-        set((state) => {
-          const index = ThemeOptions.indexOf(state.theme);
-          const nextTheme = ThemeOptions[(index + 1) % ThemeOptions.length];
-          return { theme: nextTheme };
-        }),
+  createUser: async (userId, data) => {
+    set({ isUserLoading: true });
+    try {
+      await saveUserProfile(userId, data);
+      set({ user: data });
+    } catch (error) {
+      console.error("Failed to create user profile", error);
+      throw error;
+    } finally {
+      set({ isUserLoading: false });
+    }
+  },
 
-      //  Check-in
-      saveCheckIn: (date, data) =>
-        set((state) => {
-          const existing = state.entries[date] || { date };
+  syncUserFromAuth: async (userId, data) => {
+    set({ isUserLoading: true });
+    try {
+      const profile = await syncUserProfile(userId, data);
+      set({ user: profile });
+      return profile;
+    } catch (error) {
+      console.error("Failed to sync user profile", error);
+      throw error;
+    } finally {
+      set({ isUserLoading: false });
+    }
+  },
 
-          return {
-            entries: {
-              ...state.entries,
-              [date]: {
-                ...existing,
-                date,
-                Checkin: {
-                  ...data,
-                  checkedInAt:
-                    existing.Checkin?.checkedInAt || new Date().toISOString(),
-                },
-              },
-            },
-          };
-        }),
+  updateUser: async (userId, data) => {
+    const currentUser = get().user;
+    if (!currentUser) {
+      throw new Error("Cannot update user profile before profile is loaded");
+    }
 
-      // Check-out
-      saveCheckOut: (date, data) =>
-        set((state) => {
-          const existing = state.entries[date] || { date };
+    const payload: Partial<UserProfile> = {};
+    if (typeof data.name === "string") payload.name = data.name;
+    if (typeof data.email === "string") payload.email = data.email;
+    if (typeof data.role === "string") payload.role = data.role;
 
-          return {
-            entries: {
-              ...state.entries,
-              [date]: {
-                ...existing,
-                date,
-                Checkout: {
-                  ...data,
-                  checkedOutAt:
-                    existing.Checkout?.checkedOutAt || new Date().toISOString(),
-                },
-              },
-            },
-          };
-        }),
+    if (Object.keys(payload).length === 0) {
+      return;
+    }
 
-      getEntry: (date) => get().entries[date],
+    set({ isUserLoading: true });
+    try {
+      await updateUserProfileService(userId, payload);
+      set({ user: { ...currentUser, ...payload } });
+    } catch (error) {
+      console.error("Failed to update user profile", error);
+      throw error;
+    } finally {
+      set({ isUserLoading: false });
+    }
+  },
 
-      getAllDates: () =>
-        Object.keys(get().entries).sort((a, b) => b.localeCompare(a)),
+
+  clearUser: () => set({ user: null }),
+
+  setTheme: (theme) => set({ theme }),
+
+  toggleTheme: () =>
+    set((state) => {
+      const index = ThemeOptions.indexOf(state.theme);
+      const nextTheme = ThemeOptions[(index + 1) % ThemeOptions.length];
+      return { theme: nextTheme };
     }),
-    {
-      name: "daily-checkin-storage",
-      storage: checkInPersistStorage,
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
-      partialize: (state) => ({
-        entries: state.entries,
-        theme: state.theme,
-        userProfile: state.userProfile,
-        profileSetupSeenByUid: state.profileSetupSeenByUid,
-      }),
-    },
-  ),
-);
+
+  saveCheckIn: (date, data) =>
+    set((state) => {
+      const existing = state.entries[date] || { date };
+      return {
+        entries: {
+          ...state.entries,
+          [date]: {
+            ...existing,
+            date,
+            Checkin: {
+              ...data,
+              checkedInAt: existing.Checkin?.checkedInAt || new Date().toISOString(),
+            },
+          },
+        },
+      };
+    }),
+
+  saveCheckOut: (date, data) =>
+    set((state) => {
+      const existing = state.entries[date] || { date };
+      return {
+        entries: {
+          ...state.entries,
+          [date]: {
+            ...existing,
+            date,
+            Checkout: {
+              ...data,
+              checkedOutAt:
+                existing.Checkout?.checkedOutAt || new Date().toISOString(),
+            },
+          },
+        },
+      };
+    }),
+
+  getEntry: (date) => get().entries[date],
+
+  getAllDates: () => Object.keys(get().entries).sort((a, b) => b.localeCompare(a)),
+}));

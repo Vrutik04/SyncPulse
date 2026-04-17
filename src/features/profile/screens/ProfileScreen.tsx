@@ -1,21 +1,20 @@
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
-import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View
 } from "react-native";
 
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
 import { computeStreak } from "@/shared/utils/progress";
 import { useZustandStore } from "@/store/useZustandStore";
-import { useAuthStore } from "@/features/authentication/store/AuthStore";
 
 // App version
 const version =
@@ -26,8 +25,8 @@ const version =
 // Types
 type FormState = {
   name: string;
-  position: string;
   email: string;
+  role: string;
 };
 
 type UIState = {
@@ -40,17 +39,34 @@ type UIState = {
 };
 
 export const ProfileScreen = () => {
-  const { entries, userProfile, updateUserProfile } = useZustandStore();
-  const { logout } = useAuthStore();
+  const entries = useZustandStore((state) => state.entries);
+  const user = useZustandStore((state) => state.user);
+  const updateUser = useZustandStore((state) => state.updateUser);
+  const { logout, deleteAccount, authUser } = useAuthStore();
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? All your check-in data and profile will be permanently removed.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: deleteAccount
+        }
+      ]
+    );
+  };
 
   const streak = computeStreak(entries);
   const totalCheckins = Object.values(entries).filter((e) => e.Checkin).length;
 
   // State
   const [form, setForm] = useState<FormState>({
-    name: userProfile.name,
-    position: userProfile.position,
-    email: userProfile.email,
+    name: user?.name ?? "",
+    email: user?.email ?? authUser?.email ?? "",
+    role: user?.role ?? "",
   });
 
   const [ui, setUI] = useState<UIState>({
@@ -70,38 +86,26 @@ export const ProfileScreen = () => {
     setUI((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    updateUserProfile({
-      name: form.name,
-      position: form.position,
-      email: form.email,
-    });
-    updateUI("isEditModalVisible", false);
-  };
+  const handleSave = async () => {
+    if (!authUser) return;
 
-  const handlePickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      updateUserProfile({ ProfilePhoto: result.assets[0].uri });
+    try {
+      await updateUser(authUser.uid, {
+        name: form.name,
+        email: form.email,
+        role: form.role,
+      });
+      updateUI("isEditModalVisible", false);
+    } catch {
+      Alert.alert("Error", "Could not update profile. Please try again.");
     }
   };
 
   const openEditModal = () => {
     setForm({
-      name: userProfile.name,
-      position: userProfile.position,
-      email: userProfile.email,
+      name: user?.name ?? "",
+      email: user?.email ?? authUser?.email ?? "",
+      role: user?.role ?? "",
     });
     updateUI("isEditModalVisible", true);
   };
@@ -115,38 +119,25 @@ export const ProfileScreen = () => {
         {/* ── User hero card ── */}
         <View className="mb-6 items-center px-4 pt-6 pb-8 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-3xl shadow-sm">
           {/* Avatar */}
-          <Pressable onPress={handlePickImage} className="relative">
+          <View className="relative">
             <View className="h-28 w-28 rounded-full bg-clay/10 dark:bg-clay/20 items-center justify-center border-4 border-clay/30 dark:border-clay/40 overflow-hidden">
-              {userProfile.ProfilePhoto ? (
-                <Image
-                  source={{ uri: userProfile.ProfilePhoto }}
-                  className="w-full h-full"
-                />
-              ) : (
-                <Ionicons name="person" size={56} color="#c45c3e" />
-              )}
+              <Ionicons name="person" size={56} color="#c45c3e" />
             </View>
-            <View
-              style={{ backgroundColor: "#c45c3e" }}
-              className="absolute bottom-1 right-1 h-9 w-9 rounded-full items-center justify-center border-2 border-white dark:border-ink-900"
-            >
-              <Ionicons name="camera" size={16} color="white" />
-            </View>
-          </Pressable>
+          </View>
 
           {/* Name & role */}
           <Text className="mt-4 text-2xl font-bold text-ink-900 dark:text-ink-50">
-            {userProfile.name}
+            {user?.name || "User"}
           </Text>
-          {userProfile.position ? (
+          {user?.role ? (
             <View className="bg-clay/10 dark:bg-clay/20 px-4 py-1.5 rounded-full mt-2 border border-clay/30 dark:border-clay/40">
               <Text className="text-xs font-bold text-clay dark:text-clay-muted tracking-widest uppercase">
-                {userProfile.position}
+                {user.role}
               </Text>
             </View>
           ) : null}
           <Text className="mt-2 text-sm text-ink-400 dark:text-ink-500">
-            {userProfile.email}
+            {user?.email || authUser?.email || "No email"}
           </Text>
         </View>
 
@@ -275,8 +266,19 @@ export const ProfileScreen = () => {
           className="mt-6 flex-row items-center justify-center p-4 bg-orange-50 dark:bg-clay/20 border border-orange-100 dark:border-orange-900/30 rounded-3xl active:opacity-80"
         >
           <Ionicons name="log-out-outline" size={20} color="#c45c3e" />
-          <Text className="text-clay text-lg dark:text-clay-muted font-bold ml-2 text-base">
+          <Text className="text-clay text-lg dark:text-clay-muted font-bold ml-2 ">
             Log Out
+          </Text>
+        </Pressable>
+
+        {/* ── Delete Account Button ── */}
+        <Pressable
+          onPress={handleDeleteAccount}
+          className="mt-4 flex-row items-center justify-center p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 rounded-3xl active:opacity-80"
+        >
+          <Ionicons name="trash-outline" size={20} color="#c45c3e" />
+          <Text className="text-clay text-lg dark:text-clay-muted font-bold ml-2  ">
+            Delete Account
           </Text>
         </Pressable>
       </ScrollView>
@@ -321,15 +323,15 @@ export const ProfileScreen = () => {
                 />
               </View>
 
-              {/* Position */}
+              {/* Email */}
               <View className="mb-4">
                 <Text className="text-sm font-semibold text-ink-700 dark:text-ink-300 mb-2">
-                  Position / Role
+                  Role / Position
                 </Text>
                 <TextInput
-                  value={form.position}
-                  onChangeText={(v) => updateForm("position", v)}
-                  placeholder="E.g. Senior Developer"
+                  value={form.role}
+                  onChangeText={(v) => updateForm("role", v)}
+                  placeholder="E.g. Developer"
                   placeholderTextColor="#a8aebc"
                   className="bg-ink-50 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-2xl px-4 py-3 text-base text-ink-900 dark:text-ink-50"
                 />

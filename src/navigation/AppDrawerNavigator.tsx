@@ -1,12 +1,13 @@
 import type { TabParamList } from "@/navigation/types";
 import { useZustandStore } from "@/store/useZustandStore";
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
 import { Ionicons } from "@expo/vector-icons";
 import type { DrawerContentComponentProps } from "@react-navigation/drawer";
 import {
   DrawerContentScrollView,
   DrawerItem,
 } from "@react-navigation/drawer";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 
 const items: {
@@ -25,9 +26,11 @@ export const AppDrawerContent = (props: DrawerContentComponentProps) => {
   const { navigation } = props;
 
 
-  const { name, position, email, ProfilePhoto } = useZustandStore(
-    (s) => s.userProfile
-  );
+  const user = useZustandStore((s) => s.user);
+  const authUser = useAuthStore((s) => s.authUser);
+
+  const name = user?.name ?? "User";
+  const email = user?.email ?? authUser?.email ?? "";
 
 
   const initials = name
@@ -58,17 +61,7 @@ export const AppDrawerContent = (props: DrawerContentComponentProps) => {
       <View className=" rounded-2xl bg-white p-5  dark:bg-ink-900">
 
         <View className="h-20 w-20 rounded-full overflow-hidden border-2 border-clay/30 bg-clay/10 items-center justify-center">
-          {ProfilePhoto ? (
-            <Image
-              source={{ uri: ProfilePhoto }}
-              style={{ width: 80, height: 80 }}
-              resizeMode="cover"
-            />
-          ) : (
-            <Text className="text-2xl font-bold text-clay">
-              {initials || "U"}
-            </Text>
-          )}
+          <Text className="text-2xl font-bold text-clay">{initials || "U"}</Text>
         </View>
 
 
@@ -78,16 +71,6 @@ export const AppDrawerContent = (props: DrawerContentComponentProps) => {
         >
           {name}
         </Text>
-
-
-        {position ? (
-          <Text
-            className="mt-0.5 text-xs font-semibold text-clay uppercase tracking-wide "
-            numberOfLines={1}
-          >
-            {position}
-          </Text>
-        ) : null}
 
 
         <Text

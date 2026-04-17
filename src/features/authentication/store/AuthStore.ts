@@ -5,20 +5,18 @@ import {
   signupUser,
   resetUserPassword,
   logoutUser,
+  deleteAccount as deleteAccountService,
 } from "../services/AuthServices";
+import { useZustandStore } from "@/store/useZustandStore";
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isLoading: false,
+  authUser: null,
+  isLoading: true, // Default to true so app waits for auth check
   error: null,
 
-  // 🔹 Set user (used by auth listener)
-  setUser: (user) => set({ user }),
+  setAuthUser: (authUser) => set({ authUser }),
 
-  // 🔹 Set loading (used by listener + actions)
-  setLoading: (value) => set({ isLoading: value }),
-
-  // 🔹 LOGIN
+  //  LOGIN
   login: async (email, password) => {
     try {
       set({ isLoading: true, error: null });
@@ -26,7 +24,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await loginUser(email, password);
 
       set({
-        user,
+        authUser: {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+        },
         isLoading: false,
       });
     } catch (error: unknown) {
@@ -45,7 +47,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await signupUser(email, password);
 
       set({
-        user,
+        authUser: {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+        },
         isLoading: false,
       });
     } catch (error: unknown) {
@@ -79,14 +85,40 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isLoading: true, error: null });
 
       await logoutUser();
+      useZustandStore.getState().clearUser();
 
       set({
-        user: null,
+        authUser: null,
         isLoading: false,
       });
     } catch (error: unknown) {
       set({
         error: error instanceof Error ? error.message : "Logout failed",
+        isLoading: false,
+      });
+    }
+  },
+
+  // ❌ DELETE ACCOUNT
+  deleteAccount: async () => {
+    try {
+      set({ isLoading: true, error: null });
+
+      const uid = useAuthStore.getState().authUser?.uid;
+      
+      await deleteAccountService();
+      
+      if (uid) {
+        useZustandStore.getState().clearUser();
+      }
+
+      set({
+        authUser: null,
+        isLoading: false,
+      });
+    } catch (error: unknown) {
+      set({
+        error: error instanceof Error ? error.message : "Failed to delete account",
         isLoading: false,
       });
     }

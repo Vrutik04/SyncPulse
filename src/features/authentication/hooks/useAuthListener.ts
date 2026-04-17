@@ -1,29 +1,47 @@
-import { useEffect } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/features/authentication/config/Firebase";
+import { auth } from "@/config/firebase";
 import { useAuthStore } from "@/features/authentication/store/AuthStore";
+import { useZustandStore } from "@/store/useZustandStore";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { useEffect } from "react";
 
 export const useAuthListener = () => {
-  const setUser = useAuthStore((state) => state.setUser);
-  const setLoading = useAuthStore((state) => state.setLoading);
+  const setAuthUser = useAuthStore((state) => state.setAuthUser);
 
   useEffect(() => {
-    // Start loading while checking auth state
-    setLoading(true);
+    useAuthStore.setState({ isLoading: true, error: null });
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      (user: User | null) => {
-        setUser(user);
-        setLoading(false); 
-        //  stop loading after check
+      async (user: User | null) => {
+        try {
+          if (!user) {
+            setAuthUser(null);
+            useZustandStore.getState().clearUser();
+            return;
+          }
+
+          setAuthUser({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+          });
+
+          await useZustandStore.getState().syncUserFromAuth(user.uid, {
+            name: user.displayName,
+            email: user.email,
+          });
+        } catch (error) {
+          console.log("Auth listener profile sync error:", error);
+        } finally {
+          useAuthStore.setState({ isLoading: false });
+        }
       },
       (error) => {
         console.log("Auth Listener Error:", error);
-        setLoading(false);
-      }
+        useAuthStore.setState({ isLoading: false });
+      },
     );
 
     return unsubscribe;
-  }, []);
+  }, [setAuthUser]);
 };
