@@ -11,21 +11,22 @@ import {
   View,
 } from "react-native";
 
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
 import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
 import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
 import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
-import { computeStreak, weeklyCompletionCount } from "@/shared/utils/progress";
 import { PrimaryButton } from "@/shared/components/PrimaryButton";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { StatusIndicator } from "@/shared/components/StatusIndicator";
 import { WeeklyDots } from "@/shared/components/WeeklyDots";
 import { formatDisplayDate, formatTime } from "@/shared/utils/date";
+import { computeStreak, weeklyCompletionCount } from "@/shared/utils/progress";
 import { useZustandStore } from "@/store/useZustandStore";
 
 // Types
 type FormState = {
   projectName: string;
-  goal: string;
+  task: string;
   note: string;
   works: WorkItem[];
 };
@@ -39,6 +40,7 @@ export const HistoryScreen = () => {
   const entries = useZustandStore((state) => state.entries);
   const saveCheckin = useZustandStore((state) => state.saveCheckIn);
   const saveCheckout = useZustandStore((state) => state.saveCheckOut);
+  const authUser = useAuthStore((state) => state.authUser);
 
   // Today's date string
   const todayObj = new Date();
@@ -51,7 +53,7 @@ export const HistoryScreen = () => {
   // Object state
   const [form, setForm] = useState<FormState>({
     projectName: "",
-    goal: "",
+    task: "",
     note: "",
     works: [{ text: "", status: "completed" }],
   });
@@ -119,7 +121,7 @@ export const HistoryScreen = () => {
     const record = entries[modal.selectedDate];
     if (modal.editType === "Checkin") {
       updateForm("projectName", record?.Checkin?.projectName || "");
-      updateForm("goal", record?.Checkin?.goal || "");
+      updateForm("task", record?.Checkin?.task || "");
       updateForm("note", record?.Checkin?.note || "");
     } else {
       if (record?.Checkout?.works && record.Checkout.works.length > 0) {
@@ -137,21 +139,22 @@ export const HistoryScreen = () => {
     }
   }, [modal.selectedDate, modal.editType]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (
       !modal.selectedDate ||
       !modal.editType ||
-      modal.selectedDate !== todayDate
+      modal.selectedDate !== todayDate ||
+      !authUser
     )
       return;
     if (modal.editType === "Checkin") {
-      if (form.projectName.trim() === "" || form.goal.trim() === "") {
-        Alert.alert("Error", "Enter project and goal");
+      if (form.projectName.trim() === "" || form.task.trim() === "") {
+        Alert.alert("Error", "Enter project and task");
         return;
       }
-      saveCheckin(modal.selectedDate, {
+      await saveCheckin(authUser.uid, modal.selectedDate, {
         projectName: form.projectName.trim(),
-        goal: form.goal.trim(),
+        task: form.task.trim(),
         note: form.note.trim(),
       });
     } else {
@@ -160,7 +163,7 @@ export const HistoryScreen = () => {
         Alert.alert("Error", "Enter at least one work completed");
         return;
       }
-      saveCheckout(modal.selectedDate, {
+      await saveCheckout(authUser.uid, modal.selectedDate, {
         works: validWorks.map((w) => ({
           text: w.text.trim(),
           status: w.status,
@@ -203,41 +206,37 @@ export const HistoryScreen = () => {
                   Haptics.selectionAsync();
                 }}
                 style={isSelected ? { backgroundColor: "#c45c3e" } : {}}
-                className={`items-center justify-center rounded-2xl p-2 mx-1.5 w-16 h-20 border ${
-                  isSelected
+                className={`items-center justify-center rounded-2xl p-2 mx-1.5 w-16 h-20 border ${isSelected
                     ? "border-clay"
                     : isToday
                       ? "border-clay bg-white dark:bg-ink-900"
                       : "border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900"
-                }`}
+                  }`}
               >
                 <Text
-                  className={`text-xs font-semibold ${
-                    isSelected
+                  className={`text-xs font-semibold ${isSelected
                       ? "text-white"
                       : isToday
                         ? "text-clay dark:text-clay-muted"
                         : "text-ink-500 dark:text-ink-400"
-                  }`}
+                    }`}
                 >
                   {dayName}
                 </Text>
                 <Text
-                  className={`text-lg font-bold mt-1 ${
-                    isSelected
+                  className={`text-lg font-bold mt-1 ${isSelected
                       ? "text-white"
                       : isToday
                         ? "text-clay dark:text-clay-muted"
                         : "text-ink-900 dark:text-ink-100"
-                  }`}
+                    }`}
                 >
                   {dayNum}
                 </Text>
                 {isToday && (
                   <View
-                    className={`w-1.5 h-1.5 rounded-full mt-1 ${
-                      isSelected ? "bg-white" : "bg-clay dark:bg-clay-muted"
-                    }`}
+                    className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? "bg-white" : "bg-clay dark:bg-clay-muted"
+                      }`}
                   />
                 )}
               </Pressable>
@@ -287,7 +286,7 @@ export const HistoryScreen = () => {
                   {work.Checkin.projectName}
                 </Text>
                 <Text className="text-ink-600 dark:text-ink-300 leading-5 mb-2">
-                  {work.Checkin.goal}
+                  {work.Checkin.task}
                 </Text>
                 <Text className="text-xs text-ink-400 dark:text-ink-500 font-medium">
                   {formatTime(work.Checkin.checkedInAt)}
@@ -405,64 +404,64 @@ export const HistoryScreen = () => {
               </Text>
             </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {modal.editType === "Checkin" && (
-              <View
-                pointerEvents={
-                  modal.selectedDate === todayDate ? "auto" : "none"
-                }
-              >
-                <CheckinInputs
-                  projectName={form.projectName}
-                  onProjectNameChange={(val) => updateForm("projectName", val)}
-                  goal={form.goal}
-                  onGoalChange={(val) => updateForm("goal", val)}
-                  note={form.note}
-                  onNoteChange={(val) => updateForm("note", val)}
-                />
-              </View>
-            )}
-
-            {modal.editType === "Checkout" && (
-              <View>
-                {modal.selectedDate === todayDate ? (
-                  <CheckoutInputs
-                    works={form.works}
-                    onWorksChange={(val) => updateForm("works", val)}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {modal.editType === "Checkin" && (
+                <View
+                  pointerEvents={
+                    modal.selectedDate === todayDate ? "auto" : "none"
+                  }
+                >
+                  <CheckinInputs
+                    projectName={form.projectName}
+                    onProjectNameChange={(val) => updateForm("projectName", val)}
+                    task={form.task}
+                    ontaskChange={(val) => updateForm("task", val)}
+                    note={form.note}
+                    onNoteChange={(val) => updateForm("note", val)}
                   />
-                ) : (
-                  <View className="bg-ink-50 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-xl p-4">
-                    {form.works.map((w, index) => (
-                      <View
-                        key={index}
-                        className="flex-row justify-between items-start mb-3 border-b border-ink-100 dark:border-ink-700 pb-3"
-                      >
-                        <Text className="text-ink-800 dark:text-ink-100 flex-1 pr-3">
-                          {w.text}
-                        </Text>
-                        <StatusIndicator status={w.status} />
-                      </View>
-                    ))}
-                  </View>
+                </View>
+              )}
+
+              {modal.editType === "Checkout" && (
+                <View>
+                  {modal.selectedDate === todayDate ? (
+                    <CheckoutInputs
+                      works={form.works}
+                      onWorksChange={(val) => updateForm("works", val)}
+                    />
+                  ) : (
+                    <View className="bg-ink-50 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-xl p-4">
+                      {form.works.map((w, index) => (
+                        <View
+                          key={index}
+                          className="flex-row justify-between items-start mb-3 border-b border-ink-100 dark:border-ink-700 pb-3"
+                        >
+                          <Text className="text-ink-800 dark:text-ink-100 flex-1 pr-3">
+                            {w.text}
+                          </Text>
+                          <StatusIndicator status={w.status} />
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
+
+              <View className="mt-8">
+                {modal.selectedDate === todayDate && (
+                  <PrimaryButton label="Save Changes" onPress={handleSave} />
                 )}
               </View>
-            )}
 
-            <View className="mt-8">
-              {modal.selectedDate === todayDate && (
-                <PrimaryButton label="Save Changes" onPress={handleSave} />
-              )}
-            </View>
-
-            <Pressable
-              onPress={closeModal}
-              className="mt-4 py-4 rounded-xl items-center border border-ink-200 dark:border-ink-700"
-            >
-              <Text className="text-base font-semibold text-ink-500 dark:text-ink-400">
-                {modal.selectedDate === todayDate ? "Cancel" : "Close"}
-              </Text>
-            </Pressable>
-          </ScrollView>
+              <Pressable
+                onPress={closeModal}
+                className="mt-4 py-4 rounded-xl items-center border border-ink-200 dark:border-ink-700"
+              >
+                <Text className="text-base font-semibold text-ink-500 dark:text-ink-400">
+                  {modal.selectedDate === todayDate ? "Cancel" : "Close"}
+                </Text>
+              </Pressable>
+            </ScrollView>
           </View>
         </View>
       </Modal>

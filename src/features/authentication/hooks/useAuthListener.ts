@@ -30,6 +30,9 @@ export const useAuthListener = () => {
             name: user.displayName,
             email: user.email,
           });
+
+          // Load daily activities for history and today's state
+          await useZustandStore.getState().loadActivities(user.uid);
         } catch (error) {
           console.log("Auth listener profile sync error:", error);
         } finally {

@@ -5,12 +5,22 @@ import type {
   ThemePreference,
 } from "@/features/checkincheckout/types/Checkinout";
 import {
+  formatDisplayDate,
+  formatTime,
+  getDateKey,
+} from "@/shared/utils/date";
+import {
   getUserProfile,
   saveUserProfile,
   syncUserProfile,
   updateUserProfile as updateUserProfileService,
   type UserProfile,
 } from "@/services/user.service";
+import {
+  saveCheckIn as saveCheckInService,
+  saveCheckOut as saveCheckOutService,
+  getAllActivities,
+} from "@/services/activity.service";
 import { create } from "zustand";
 
 const ThemeOptions: ThemePreference[] = ["system", "light", "dark"];
@@ -18,6 +28,7 @@ const ThemeOptions: ThemePreference[] = ["system", "light", "dark"];
 type ZustandStore = {
   user: UserProfile | null;
   isUserLoading: boolean;
+  profileImage: string | null;
   entries: Record<string, DailyRecord>;
   theme: ThemePreference;
   setUser: (user: UserProfile | null) => void;
@@ -29,10 +40,13 @@ type ZustandStore = {
   ) => Promise<UserProfile>;
   updateUser: (userId: string, data: Partial<UserProfile>) => Promise<void>;
   clearUser: () => void;
+  setProfileImage: (imageUri: string) => void;
+  clearProfileImage: () => void;
   setTheme: (value: ThemePreference) => void;
   toggleTheme: () => void;
-  saveCheckIn: (date: string, data: CheckinEntry) => void;
-  saveCheckOut: (date: string, data: CheckoutEntry) => void;
+  loadActivities: (userId: string) => Promise<void>;
+  saveCheckIn: (userId: string, date: string, data: CheckinEntry) => Promise<void>;
+  saveCheckOut: (userId: string, date: string, data: CheckoutEntry) => Promise<void>;
   getEntry: (date: string) => DailyRecord | undefined;
   getAllDates: () => string[];
 };
@@ -40,6 +54,7 @@ type ZustandStore = {
 export const useZustandStore = create<ZustandStore>((set, get) => ({
   user: null,
   isUserLoading: false,
+  profileImage: null,
   entries: {},
   theme: "system",
 
@@ -114,7 +129,11 @@ export const useZustandStore = create<ZustandStore>((set, get) => ({
   },
 
 
-  clearUser: () => set({ user: null }),
+  clearUser: () => set({ user: null, profileImage: null, entries: {} }),
+
+  setProfileImage: (imageUri) => set({ profileImage: imageUri }),
+
+  clearProfileImage: () => set({ profileImage: null }),
 
   setTheme: (theme) => set({ theme }),
 
@@ -125,42 +144,76 @@ export const useZustandStore = create<ZustandStore>((set, get) => ({
       return { theme: nextTheme };
     }),
 
-  saveCheckIn: (date, data) =>
-    set((state) => {
-      const existing = state.entries[date] || { date };
-      return {
-        entries: {
-          ...state.entries,
-          [date]: {
-            ...existing,
-            date,
-            Checkin: {
-              ...data,
-              checkedInAt: existing.Checkin?.checkedInAt || new Date().toISOString(),
-            },
-          },
-        },
-      };
-    }),
+  loadActivities: async (userId) => {
+    try {
+      const activities = await getAllActivities(userId);
+      const entries: Record<string, DailyRecord> = {};
+      for (const activity of activities) {
+        entries[activity.date] = activity;
+      }
+      set({ entries });
+    } catch (error) {
+      console.error("Failed to load activities", error);
+    }
+  },
 
-  saveCheckOut: (date, data) =>
-    set((state) => {
-      const existing = state.entries[date] || { date };
-      return {
-        entries: {
-          ...state.entries,
-          [date]: {
-            ...existing,
-            date,
-            Checkout: {
-              ...data,
-              checkedOutAt:
-                existing.Checkout?.checkedOutAt || new Date().toISOString(),
-            },
-          },
+  saveCheckIn: async (userId, date, data) => {
+    const existing = get().entries[date] || { date };
+    const now = new Date().toISOString();
+    
+    const newCheckin = {
+      ...existing.Checkin,
+      ...data,
+      checkedInAt: existing.Checkin?.checkedInAt || now,
+      checkInTime: existing.Checkin?.checkInTime || formatTime(now),
+    };
+
+    try {
+      await saveCheckInService(userId, date, newCheckin);
+    } catch (error) {
+      console.error("Failed to save check-in to Firestore", error);
+    }
+
+    set((state) => ({
+      entries: {
+        ...state.entries,
+        [date]: {
+          ...existing,
+          date,
+          Checkin: newCheckin,
         },
-      };
-    }),
+      },
+    }));
+  },
+
+  saveCheckOut: async (userId, date, data) => {
+    const existing = get().entries[date] || { date };
+    const now = new Date().toISOString();
+
+    const newCheckout = {
+      ...existing.Checkout,
+      ...data,
+      checkedOutAt: existing.Checkout?.checkedOutAt || now,
+      checkOutTime: existing.Checkout?.checkOutTime || formatTime(now),
+    };
+
+    try {
+      await saveCheckOutService(userId, date, newCheckout);
+    } catch (error) {
+      console.error("Failed to save check-out to Firestore", error);
+    }
+
+    set((state) => ({
+      entries: {
+        ...state.entries,
+        [date]: {
+          ...existing,
+          date,
+          Checkout: newCheckout,
+        },
+      },
+    }));
+  },
 
   getEntry: (date) => get().entries[date],
 

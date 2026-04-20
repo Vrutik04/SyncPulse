@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
 import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
 import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
 import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
@@ -16,7 +17,7 @@ import { useZustandStore } from "@/store/useZustandStore";
 
 type FormState = {
   projectName: string;
-  goal: string;
+  task: string;
   note: string;
   works: WorkItem[];
 };
@@ -28,7 +29,7 @@ type UIState = {
   loading: boolean;
   errors: {
     projectName: string;
-    goal: string;
+    task: string;
     works: string;
   };
 };
@@ -44,12 +45,13 @@ export const CheckInOutScreen = ({ route }: Props) => {
 
   const today = getDateKey();
   const { entries, saveCheckIn, saveCheckOut } = useZustandStore();
+  const authUser = useAuthStore((state) => state.authUser);
   const todayEntry = entries[today];
 
   // State
   const [form, setForm] = useState<FormState>({
     projectName: "",
-    goal: "",
+    task: "",
     note: "",
     works: [{ text: "", status: "completed" }],
   });
@@ -59,7 +61,7 @@ export const CheckInOutScreen = ({ route }: Props) => {
     checkInSuccess: false,
     checkOutSuccess: false,
     loading: false,
-    errors: { projectName: "", goal: "", works: "" },
+    errors: { projectName: "", task: "", works: "" },
   });
 
   // switch tabs.
@@ -76,7 +78,7 @@ export const CheckInOutScreen = ({ route }: Props) => {
       setForm((prev) => ({
         ...prev,
         projectName: todayEntry.Checkin?.projectName ?? "",
-        goal: todayEntry.Checkin?.goal ?? "",
+        task: todayEntry.Checkin?.task ?? "",
         note: todayEntry.Checkin?.note ?? "",
       }));
     }
@@ -100,38 +102,64 @@ export const CheckInOutScreen = ({ route }: Props) => {
   };
 
   // Handlers
-  const handleCheckIn = () => {
-    if (!form.projectName.trim() || !form.goal.trim()) {
-      Alert.alert("Error", "Please enter project name and goal");
+  const handleCheckIn = async () => {
+    if (!authUser) return;
+
+    if (!form.projectName.trim() || !form.task.trim()) {
+      Alert.alert("Error", "Please enter project name and task");
       return;
     }
-    saveCheckIn(today, {
-      projectName: form.projectName.trim(),
-      goal: form.goal.trim(),
-      note: form.note.trim(),
-    });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    updateUI("checkInSuccess", true);
-    setTimeout(() => updateUI("checkInSuccess", false), 2000);
-    Alert.alert("Success", todayEntry?.Checkin ? "Task updated!" : "Check in successfully!");
+
+    updateUI("loading", true);
+    try {
+      await saveCheckIn(authUser.uid, today, {
+        projectName: form.projectName.trim(),
+        task: form.task.trim(),
+        note: form.note.trim(),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      updateUI("checkInSuccess", true);
+      setTimeout(() => updateUI("checkInSuccess", false), 2000);
+      Alert.alert(
+        "Success",
+        todayEntry?.Checkin ? "Task updated!" : "Check in successfully!",
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to save check-in. Please try again.");
+    } finally {
+      updateUI("loading", false);
+    }
   };
 
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
+    if (!authUser) return;
+
     const validWorks = form.works.filter((task) => task.text.trim() !== "");
     if (validWorks.length === 0) {
       Alert.alert("Error", "Please enter at least one work completed");
       return;
     }
-    saveCheckOut(today, {
-      works: validWorks.map((task) => ({
-        text: task.text.trim(),
-        status: task.status,
-      })),
-    });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    updateUI("checkOutSuccess", true);
-    setTimeout(() => updateUI("checkOutSuccess", false), 2000);
-    Alert.alert("Success", todayEntry?.Checkout ? "Task updated!" : "Check out successfully!");
+
+    updateUI("loading", true);
+    try {
+      await saveCheckOut(authUser.uid, today, {
+        works: validWorks.map((task) => ({
+          text: task.text.trim(),
+          status: task.status,
+        })),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      updateUI("checkOutSuccess", true);
+      setTimeout(() => updateUI("checkOutSuccess", false), 2000);
+      Alert.alert(
+        "Success",
+        todayEntry?.Checkout ? "Task updated!" : "Check out successfully!",
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to save check-out. Please try again.");
+    } finally {
+      updateUI("loading", false);
+    }
   };
 
   // Render
@@ -150,11 +178,10 @@ export const CheckInOutScreen = ({ route }: Props) => {
           className="flex-1 py-2.5 rounded-lg items-center justify-center"
         >
           <Text
-            className={`font-semibold text-sm ${
-              ui.activeTab === "Checkin"
+            className={`font-semibold text-sm ${ui.activeTab === "Checkin"
                 ? "text-white"
                 : "text-ink-500 dark:text-ink-400"
-            }`}
+              }`}
           >
             CHECK IN
           </Text>
@@ -168,11 +195,10 @@ export const CheckInOutScreen = ({ route }: Props) => {
           className="flex-1 py-2.5 rounded-lg items-center justify-center"
         >
           <Text
-            className={`font-semibold text-sm ${
-              ui.activeTab === "Checkout"
+            className={`font-semibold text-sm ${ui.activeTab === "Checkout"
                 ? "text-white"
                 : "text-ink-500 dark:text-ink-400"
-            }`}
+              }`}
           >
             CHECK OUT
           </Text>
@@ -199,11 +225,10 @@ export const CheckInOutScreen = ({ route }: Props) => {
             {/* Header */}
             <View className="flex-row items-center mb-4">
               <View
-                className={`w-9 h-9 rounded-full items-center justify-center mr-3 ${
-                  isCheckInDone
+                className={`w-9 h-9 rounded-full items-center justify-center mr-3 ${isCheckInDone
                     ? "bg-green-100 dark:bg-green-900/40"
                     : "bg-orange-100 dark:bg-clay/20"
-                }`}
+                  }`}
               >
                 {isCheckInDone ? (
                   <Ionicons name="checkmark" size={18} color="#16a34a" />
@@ -229,8 +254,8 @@ export const CheckInOutScreen = ({ route }: Props) => {
             <CheckinInputs
               projectName={form.projectName}
               onProjectNameChange={(v) => updateForm("projectName", v)}
-              goal={form.goal}
-              onGoalChange={(v) => updateForm("goal", v)}
+              task={form.task}
+              ontaskChange={(v) => updateForm("task", v)}
               note={form.note}
               onNoteChange={(v) => updateForm("note", v)}
             />
@@ -240,6 +265,7 @@ export const CheckInOutScreen = ({ route }: Props) => {
                   todayEntry?.Checkin ? "Update Check-in" : "Submit Check-In"
                 }
                 onPress={handleCheckIn}
+                loading={ui.loading}
               />
             </View>
           </View>
@@ -266,23 +292,21 @@ export const CheckInOutScreen = ({ route }: Props) => {
             {/* Header */}
             <View className="flex-row items-center mb-4">
               <View
-                className={`w-9 h-9 rounded-full items-center justify-center mr-3 ${
-                  isCheckInDone
+                className={`w-9 h-9 rounded-full items-center justify-center mr-3 ${isCheckInDone
                     ? todayEntry?.Checkout
                       ? "bg-green-100 dark:bg-green-900/40"
                       : "bg-orange-100 dark:bg-clay/20"
                     : "bg-ink-100 dark:bg-ink-800"
-                }`}
+                  }`}
               >
                 {todayEntry?.Checkout ? (
                   <Ionicons name="checkmark" size={18} color="#16a34a" />
                 ) : (
                   <Text
-                    className={`text-sm font-bold ${
-                      isCheckInDone
+                    className={`text-sm font-bold ${isCheckInDone
                         ? "text-clay"
                         : "text-ink-400 dark:text-ink-500"
-                    }`}
+                      }`}
                   >
                     2
                   </Text>
@@ -290,11 +314,10 @@ export const CheckInOutScreen = ({ route }: Props) => {
               </View>
               <View>
                 <Text
-                  className={`text-lg font-bold ${
-                    isCheckInDone
+                  className={`text-lg font-bold ${isCheckInDone
                       ? "text-ink-900 dark:text-ink-50"
                       : "text-ink-400 dark:text-ink-500"
-                  }`}
+                    }`}
                 >
                   Check-out
                 </Text>
@@ -337,6 +360,7 @@ export const CheckInOutScreen = ({ route }: Props) => {
                         : "Submit Check-Out"
                     }
                     onPress={handleCheckOut}
+                    loading={ui.loading}
                   />
                 </View>
               </View>

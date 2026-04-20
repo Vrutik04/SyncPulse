@@ -1,19 +1,18 @@
+import { useAuthStore } from "@/features/authentication/store/AuthStore";
 import type { TabParamList } from "@/navigation/types";
 import { useZustandStore } from "@/store/useZustandStore";
-import { useAuthStore } from "@/features/authentication/store/AuthStore";
 import { Ionicons } from "@expo/vector-icons";
 import type { DrawerContentComponentProps } from "@react-navigation/drawer";
 import {
   DrawerContentScrollView,
   DrawerItem,
 } from "@react-navigation/drawer";
-import { Text, View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 
 const items: {
   name: keyof TabParamList;
   label: string;
-
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
     { name: "Home", label: "Home", icon: "home-outline" },
@@ -25,13 +24,13 @@ const items: {
 export const AppDrawerContent = (props: DrawerContentComponentProps) => {
   const { navigation } = props;
 
-
   const user = useZustandStore((s) => s.user);
+  const profileImage = useZustandStore((s) => s.profileImage);
   const authUser = useAuthStore((s) => s.authUser);
 
   const name = user?.name ?? "User";
   const email = user?.email ?? authUser?.email ?? "";
-
+  const role = user?.role ?? "";
 
   const initials = name
     .split(" ")
@@ -58,23 +57,41 @@ export const AppDrawerContent = (props: DrawerContentComponentProps) => {
       </View>
 
 
-      <View className=" rounded-2xl bg-white p-5  dark:bg-ink-900">
+      <View className="rounded-2xl bg-white p-5 dark:bg-ink-900">
 
+        {/* Avatar */}
         <View className="h-20 w-20 rounded-full overflow-hidden border-2 border-clay/30 bg-clay/10 items-center justify-center">
-          <Text className="text-2xl font-bold text-clay">{initials || "U"}</Text>
+          {profileImage ? (
+            <Image
+              source={{ uri: profileImage }}
+              style={{ width: 80, height: 80 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text className="text-2xl font-bold text-clay">{initials || "U"}</Text>
+          )}
         </View>
 
-
+        {/* Name */}
         <Text
-          className="mt-3 text-base font-bold text-ink-900 dark:text-ink-50 "
+          className="mt-3 text-base font-bold text-ink-900 dark:text-ink-50"
           numberOfLines={1}
         >
           {name}
         </Text>
 
+        {/* Role badge — same style as Profile screen */}
+        {role ? (
+          <View className="bg-clay/10 dark:bg-clay/20 self-start px-3 py-1 rounded-full mt-1 border border-clay/30 dark:border-clay/40">
+            <Text className="text-xs font-bold text-clay dark:text-clay-muted tracking-widest uppercase">
+              {role}
+            </Text>
+          </View>
+        ) : null}
 
+        {/* Email */}
         <Text
-          className="mt-1 text-xs text-ink-400 dark:text-ink-500 "
+          className="mt-1 text-xs text-ink-400 dark:text-ink-500"
           numberOfLines={1}
         >
           {email}

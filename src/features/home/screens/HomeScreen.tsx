@@ -1,9 +1,9 @@
 import { DateTimeCard } from "@/features/checkincheckout/components/DateTimeCard";
 import { MissedCheckoutModal } from "@/features/checkincheckout/components/MissedCheckoutModal";
-import { isMissedCheckout } from "@/shared/utils/missedCheckout";
 import type { HomeScreenNavigationProp } from "@/navigation/types";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { formatDisplayDate, formatTime, getDateKey } from "@/shared/utils/date";
+import { isMissedCheckout } from "@/shared/utils/missedCheckout";
 import { useZustandStore } from "@/store/useZustandStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -155,7 +155,7 @@ export const HomeScreen = () => {
               {todayEntry?.Checkin?.projectName}
             </Text>
             <Text className="text-sm text-ink-600 dark:text-ink-300">
-              {todayEntry?.Checkin?.goal}
+              {todayEntry?.Checkin?.task}
             </Text>
             <Text className="text-xs text-ink-400 dark:text-ink-500 mt-1">
               {formatTime(todayEntry?.Checkin?.checkedInAt || "")}

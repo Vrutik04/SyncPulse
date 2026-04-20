@@ -1,9 +1,11 @@
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
+import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -42,6 +44,8 @@ export const ProfileScreen = () => {
   const entries = useZustandStore((state) => state.entries);
   const user = useZustandStore((state) => state.user);
   const updateUser = useZustandStore((state) => state.updateUser);
+  const profileImage = useZustandStore((state) => state.profileImage);
+  const setProfileImage = useZustandStore((state) => state.setProfileImage);
   const { logout, deleteAccount, authUser } = useAuthStore();
 
   const handleDeleteAccount = () => {
@@ -86,6 +90,25 @@ export const ProfileScreen = () => {
     setUI((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handlePickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission Required", "Please allow access to your photo library.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      setProfileImage(result.assets[0].uri);
+    }
+  };
+
   const handleSave = async () => {
     if (!authUser) return;
 
@@ -118,15 +141,29 @@ export const ProfileScreen = () => {
       >
         {/* ── User hero card ── */}
         <View className="mb-6 items-center px-4 pt-6 pb-8 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-3xl shadow-sm">
-          {/* Avatar */}
+          {/* Avatar with edit button */}
           <View className="relative">
-            <View className="h-28 w-28 rounded-full bg-clay/10 dark:bg-clay/20 items-center justify-center border-4 border-clay/30 dark:border-clay/40 overflow-hidden">
-              <Ionicons name="person" size={56} color="#c45c3e" />
-            </View>
+            <Pressable onPress={handlePickImage} className="relative">
+              <View className="h-28 w-28 rounded-full bg-clay/10 dark:bg-clay/20 items-center justify-center border-4 border-clay/30 dark:border-clay/40 overflow-hidden">
+                {profileImage ? (
+                  <Image
+                    source={{ uri: profileImage }}
+                    style={{ width: 112, height: 112 }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Ionicons name="person" size={56} color="#c45c3e" />
+                )}
+              </View>
+              {/* Camera overlay badge */}
+              <View className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-clay items-center justify-center border-2 border-white dark:border-ink-900">
+                <Ionicons name="camera" size={14} color="#fff" />
+              </View>
+            </Pressable>
           </View>
 
           {/* Name & role */}
-          <Text className="mt-4 text-2xl font-bold text-ink-900 dark:text-ink-50">
+          <Text className="mt-2 text-2xl font-bold text-ink-900 dark:text-ink-50">
             {user?.name || "User"}
           </Text>
           {user?.role ? (
@@ -323,7 +360,7 @@ export const ProfileScreen = () => {
                 />
               </View>
 
-              {/* Email */}
+              {/* Role */}
               <View className="mb-4">
                 <Text className="text-sm font-semibold text-ink-700 dark:text-ink-300 mb-2">
                   Role / Position

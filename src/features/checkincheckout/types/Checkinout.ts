@@ -3,9 +3,10 @@ export type CheckoutStatus = "completed" | "partial" | "blocked";
 // Saved when you submit check-in
 export type CheckinEntry = {
   projectName: string;
-  goal: string;
+  task: string;
   note?: string;
   checkedInAt?: string;
+  checkInTime?: string;
 };
 
 export type WorkItem = {
@@ -19,6 +20,7 @@ export type CheckoutEntry = {
   workCompleted?: string;
   status?: CheckoutStatus;
   checkedOutAt?: string;
+  checkOutTime?: string;
 };
 
 export type DailyRecord = {

@@ -3,13 +3,13 @@ import { Text, TextInput, View } from "react-native";
 type CheckinInputs = {
   projectName: string;
   onProjectNameChange: (v: string) => void;
-  goal: string;
-  onGoalChange: (v: string) => void;
+  task: string;
+  ontaskChange: (v: string) => void;
   note: string;
   onNoteChange: (v: string) => void;
   errors?: {
     projectName?: string;
-    goal?: string;
+    task?: string;
     note?: string;
   };
 };
@@ -22,8 +22,8 @@ const labelClass = "mb-2 text-sm font-semibold text-ink-700 dark:text-ink-300";
 export const CheckinInputs = ({
   projectName,
   onProjectNameChange,
-  goal,
-  onGoalChange,
+  task,
+  ontaskChange,
   note,
   onNoteChange,
 }: CheckinInputs) => (
@@ -39,10 +39,10 @@ export const CheckinInputs = ({
       />
     </View>
     <View>
-      <Text className={labelClass}>Today&apos;s Goal</Text>
+      <Text className={labelClass}>Today&apos;s task</Text>
       <TextInput
-        value={goal}
-        onChangeText={onGoalChange}
+        value={task}
+        onChangeText={ontaskChange}
         placeholder="What do you intend to finish?"
         placeholderTextColor="#a8aebc"
         multiline
