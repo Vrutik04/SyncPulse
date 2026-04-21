@@ -1,6 +1,6 @@
-import { useAuthStore } from "@/features/authentication/store/AuthStore";
+import { useAuthStore } from "@/features/auth/store/AuthStore";
 import type { TabParamList } from "@/navigation/types";
-import { useZustandStore } from "@/store/useZustandStore";
+import { useProfileStore } from "@/features/profile/store/useProfileStore";
 import { Ionicons } from "@expo/vector-icons";
 import type { DrawerContentComponentProps } from "@react-navigation/drawer";
 import {
@@ -24,8 +24,8 @@ const items: {
 export const AppDrawerContent = (props: DrawerContentComponentProps) => {
   const { navigation } = props;
 
-  const user = useZustandStore((s) => s.user);
-  const profileImage = useZustandStore((s) => s.profileImage);
+  const user = useProfileStore((s) => s.user);
+  const profileImage = useProfileStore((s) => s.profileImage);
   const authUser = useAuthStore((s) => s.authUser);
 
   const name = user?.name ?? "User";

@@ -14,9 +14,10 @@ import {
   View
 } from "react-native";
 
-import { useAuthStore } from "@/features/authentication/store/AuthStore";
+import { useAuthStore } from "@/features/auth/store/AuthStore";
 import { computeStreak } from "@/shared/utils/progress";
-import { useZustandStore } from "@/store/useZustandStore";
+import { useProfileStore } from "@/features/profile/store/useProfileStore";
+import { useCheckinStore } from "@/features/check-in-out/store/useCheckinStore";
 
 // App version
 const version =
@@ -41,11 +42,11 @@ type UIState = {
 };
 
 export const ProfileScreen = () => {
-  const entries = useZustandStore((state) => state.entries);
-  const user = useZustandStore((state) => state.user);
-  const updateUser = useZustandStore((state) => state.updateUser);
-  const profileImage = useZustandStore((state) => state.profileImage);
-  const setProfileImage = useZustandStore((state) => state.setProfileImage);
+  const entries = useCheckinStore((state) => state.entries);
+  const user = useProfileStore((state) => state.user);
+  const updateUser = useProfileStore((state) => state.updateUser);
+  const profileImage = useProfileStore((state) => state.profileImage);
+  const setProfileImage = useProfileStore((state) => state.setProfileImage);
   const { logout, deleteAccount, authUser } = useAuthStore();
 
   const handleDeleteAccount = () => {

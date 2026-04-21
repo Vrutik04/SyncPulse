@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@react-navigation/native";
-import { useZustandStore } from "@/store/useZustandStore";
-import { useAuthStore } from "@/features/authentication/store/AuthStore";
+import { useProfileStore } from "../store/useProfileStore";
+import { useAuthStore } from "@/features/auth/store/AuthStore";
 
 type ProfileSetupModalProps = {
   visible: boolean;
@@ -33,8 +33,8 @@ export const ProfileSetupModal = ({
   onSkip,
 }: ProfileSetupModalProps) => {
   const { colors } = useTheme();
-  const user = useZustandStore((state) => state.user);
-  const updateUser = useZustandStore((state) => state.updateUser);
+  const user = useProfileStore((state) => state.user);
+  const updateUser = useProfileStore((state) => state.updateUser);
   const authUser = useAuthStore((state) => state.authUser);
 
   const [form, setForm] = useState<ProfileSetupForm>({
@@ -112,7 +112,7 @@ export const ProfileSetupModal = ({
     >
       <View className="flex-1 bg-black/55 items-center justify-center px-5">
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="w-full"
         >
           <View className="rounded-3xl bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 p-5 shadow-lg">

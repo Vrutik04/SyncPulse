@@ -1,10 +1,12 @@
-import { DateTimeCard } from "@/features/checkincheckout/components/DateTimeCard";
-import { MissedCheckoutModal } from "@/features/checkincheckout/components/MissedCheckoutModal";
+import { DateTimeCard } from "@/features/check-in-out/components/DateTimeCard";
+import { MissedCheckoutModal } from "@/features/check-in-out/components/MissedCheckoutModal";
+import { WorkItem } from "@/features/check-in-out/types/Checkinout";
 import type { HomeScreenNavigationProp } from "@/navigation/types";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
+import { StatusIndicator } from "@/shared/components/StatusIndicator";
 import { formatDisplayDate, formatTime, getDateKey } from "@/shared/utils/date";
 import { isMissedCheckout } from "@/shared/utils/missedCheckout";
-import { useZustandStore } from "@/store/useZustandStore";
+import { useCheckinStore } from "@/features/check-in-out/store/useCheckinStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
@@ -14,7 +16,9 @@ export const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
 
   const today = getDateKey();
-  const todayEntry = useZustandStore((state) => state.entries[today]);
+  const entries = useCheckinStore((state) => state.entries);
+  const isActivitiesLoaded = useCheckinStore((state) => state.isActivitiesLoaded);
+  const todayEntry = entries[today];
 
   const isCheckinDone = !!todayEntry?.Checkin;
   const isCheckoutDone = !!todayEntry?.Checkout;
@@ -26,13 +30,15 @@ export const HomeScreen = () => {
   const alreadyChecked = useRef(false);
 
   useEffect(() => {
+    if (!isActivitiesLoaded) return;
+
     if (alreadyChecked.current) return;
     alreadyChecked.current = true;
-    const currentEntries = useZustandStore.getState().entries;
-    if (isMissedCheckout(currentEntries)) {
+
+    if (isMissedCheckout(entries)) {
       setShowModal(true);
     }
-  }, []);
+  }, [isActivitiesLoaded, entries]);
 
   return (
     <ScreenContainer
@@ -63,11 +69,11 @@ export const HomeScreen = () => {
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
               Check in
             </Text>
-            {todayEntry?.Checkin?.checkedInAt ? (
+            {todayEntry?.Checkin?.checkInTime || todayEntry?.Checkin?.checkedInAt ? (
               <View className="flex-row items-center">
                 <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
                 <Text className="text-sm font-semibold text-ink-800 dark:text-ink-100 ml-2">
-                  {formatTime(todayEntry.Checkin.checkedInAt)}
+                  {todayEntry.Checkin.checkInTime || formatTime(todayEntry.Checkin.checkedInAt)}
                 </Text>
               </View>
             ) : (
@@ -92,11 +98,11 @@ export const HomeScreen = () => {
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
               Check out
             </Text>
-            {todayEntry?.Checkout?.checkedOutAt ? (
+            {todayEntry?.Checkout?.checkOutTime || todayEntry?.Checkout?.checkedOutAt ? (
               <View className="flex-row items-center">
                 <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
                 <Text className="text-sm font-semibold text-ink-800 dark:text-ink-100 ml-2">
-                  {formatTime(todayEntry.Checkout.checkedOutAt)}
+                  {todayEntry.Checkout.checkOutTime || formatTime(todayEntry.Checkout.checkedOutAt)}
                 </Text>
               </View>
             ) : (
@@ -158,7 +164,7 @@ export const HomeScreen = () => {
               {todayEntry?.Checkin?.task}
             </Text>
             <Text className="text-xs text-ink-400 dark:text-ink-500 mt-1">
-              {formatTime(todayEntry?.Checkin?.checkedInAt || "")}
+              {todayEntry?.Checkin?.checkInTime || formatTime(todayEntry?.Checkin?.checkedInAt || "")}
             </Text>
           </>
         ) : (
@@ -175,11 +181,20 @@ export const HomeScreen = () => {
         </Text>
         {isCheckoutDone ? (
           <>
-            <Text className="text-sm text-ink-700 dark:text-ink-200">
-              {todayEntry?.Checkout?.workCompleted}
-            </Text>
-            <Text className="text-xs text-ink-400 dark:text-ink-500 mt-1">
-              {formatTime(todayEntry?.Checkout?.checkedOutAt || "")}
+            {todayEntry?.Checkout?.works?.map((w: WorkItem, idx: number) => (
+              <View key={idx} className="flex-row justify-between items-center mb-1">
+                <Text className="text-sm text-ink-700 dark:text-ink-200 flex-1 pr-2">
+                  {w.text}
+                </Text>
+                <View className="ml-2">
+                  <StatusIndicator
+                    status={w.status || "completed"}
+                  />
+                </View>
+              </View>
+            ))}
+            <Text className="text-xs text-ink-400 dark:text-ink-500 mt-2">
+              {todayEntry?.Checkout?.checkOutTime || formatTime(todayEntry?.Checkout?.checkedOutAt || "")}
             </Text>
           </>
         ) : (

@@ -11,17 +11,17 @@ import {
   View,
 } from "react-native";
 
-import { useAuthStore } from "@/features/authentication/store/AuthStore";
-import { CheckinInputs } from "@/features/checkincheckout/components/CheckInForm";
-import { CheckoutInputs } from "@/features/checkincheckout/components/CheckOutForm";
-import type { WorkItem } from "@/features/checkincheckout/types/Checkinout";
+import { useAuthStore } from "@/features/auth/store/AuthStore";
+import { CheckinInputs } from "@/features/check-in-out/components/CheckInForm";
+import { CheckoutInputs } from "@/features/check-in-out/components/CheckOutForm";
+import type { WorkItem } from "@/features/check-in-out/types/Checkinout";
 import { PrimaryButton } from "@/shared/components/PrimaryButton";
 import { ScreenContainer } from "@/shared/components/ScreenContainer";
 import { StatusIndicator } from "@/shared/components/StatusIndicator";
 import { WeeklyDots } from "@/shared/components/WeeklyDots";
 import { formatDisplayDate, formatTime } from "@/shared/utils/date";
 import { computeStreak, weeklyCompletionCount } from "@/shared/utils/progress";
-import { useZustandStore } from "@/store/useZustandStore";
+import { useCheckinStore } from "@/features/check-in-out/store/useCheckinStore";
 
 // Types
 type FormState = {
@@ -37,9 +37,9 @@ type ModalState = {
 };
 
 export const HistoryScreen = () => {
-  const entries = useZustandStore((state) => state.entries);
-  const saveCheckin = useZustandStore((state) => state.saveCheckIn);
-  const saveCheckout = useZustandStore((state) => state.saveCheckOut);
+  const entries = useCheckinStore((state) => state.entries);
+  const saveCheckin = useCheckinStore((state) => state.saveCheckIn);
+  const saveCheckout = useCheckinStore((state) => state.saveCheckOut);
   const authUser = useAuthStore((state) => state.authUser);
 
   // Today's date string
@@ -58,17 +58,17 @@ export const HistoryScreen = () => {
     works: [{ text: "", status: "completed" }],
   });
 
-  const [modal, setModal] = useState<ModalState>({
-    selectedDate: null,
-    editType: null,
-  });
-
   const updateForm = <K extends keyof FormState>(
     key: K,
     value: FormState[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  const [modal, setModal] = useState<ModalState>({
+    selectedDate: null,
+    editType: null,
+  });
 
   const openModal = (date: string, type: "Checkin" | "Checkout") => {
     setModal({ selectedDate: date, editType: type });
@@ -181,7 +181,7 @@ export const HistoryScreen = () => {
 
   return (
     <ScreenContainer title="History" subtitle="Your entries by date">
-      {/* Calendar strip */}
+      {/* Calendar  */}
       <View className="mb-5 border-b border-ink-200 dark:border-ink-800 pb-2">
         <FlatList
           ref={flatListRef}
@@ -206,37 +206,41 @@ export const HistoryScreen = () => {
                   Haptics.selectionAsync();
                 }}
                 style={isSelected ? { backgroundColor: "#c45c3e" } : {}}
-                className={`items-center justify-center rounded-2xl p-2 mx-1.5 w-16 h-20 border ${isSelected
+                className={`items-center justify-center rounded-2xl p-2 mx-1.5 w-16 h-20 border ${
+                  isSelected
                     ? "border-clay"
                     : isToday
                       ? "border-clay bg-white dark:bg-ink-900"
                       : "border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900"
-                  }`}
+                }`}
               >
                 <Text
-                  className={`text-xs font-semibold ${isSelected
+                  className={`text-xs font-semibold ${
+                    isSelected
                       ? "text-white"
                       : isToday
                         ? "text-clay dark:text-clay-muted"
                         : "text-ink-500 dark:text-ink-400"
-                    }`}
+                  }`}
                 >
                   {dayName}
                 </Text>
                 <Text
-                  className={`text-lg font-bold mt-1 ${isSelected
+                  className={`text-lg font-bold mt-1 ${
+                    isSelected
                       ? "text-white"
                       : isToday
                         ? "text-clay dark:text-clay-muted"
                         : "text-ink-900 dark:text-ink-100"
-                    }`}
+                  }`}
                 >
                   {dayNum}
                 </Text>
                 {isToday && (
                   <View
-                    className={`w-1.5 h-1.5 rounded-full mt-1 ${isSelected ? "bg-white" : "bg-clay dark:bg-clay-muted"
-                      }`}
+                    className={`w-1.5 h-1.5 rounded-full mt-1 ${
+                      isSelected ? "bg-white" : "bg-clay dark:bg-clay-muted"
+                    }`}
                   />
                 )}
               </Pressable>
@@ -388,9 +392,17 @@ export const HistoryScreen = () => {
       </ScrollView>
 
       {/* Edit / View Modal */}
-      <Modal visible={modal.selectedDate !== null} animationType="slide" transparent={true} onRequestClose={closeModal}>
+      <Modal
+        visible={modal.selectedDate !== null}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeModal}
+      >
         <View className="flex-1 justify-end bg-black/40 dark:bg-black/60">
-          <View className="bg-paper dark:bg-ink-950 px-5 pt-6 pb-8 rounded-t-3xl" style={{ maxHeight: '90%' }}>
+          <View
+            className="bg-paper dark:bg-ink-950 px-5 pt-6 pb-8 rounded-t-3xl"
+            style={{ maxHeight: "90%" }}
+          >
             {/* Modal header */}
             <View className="py-2 mb-4 items-center">
               <Text className="text-clay dark:text-clay-muted text-2xl font-bold text-center">
@@ -413,7 +425,9 @@ export const HistoryScreen = () => {
                 >
                   <CheckinInputs
                     projectName={form.projectName}
-                    onProjectNameChange={(val) => updateForm("projectName", val)}
+                    onProjectNameChange={(val) =>
+                      updateForm("projectName", val)
+                    }
                     task={form.task}
                     ontaskChange={(val) => updateForm("task", val)}
                     note={form.note}

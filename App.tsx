@@ -1,5 +1,5 @@
 import { RootNavigator } from "@/navigation/RootNavigator";
-import { useZustandStore as useDailyRecordsStore } from "@/store/useZustandStore";
+import { useProfileStore } from "@/features/profile/store/useProfileStore";
 import {
   DarkTheme,
   DefaultTheme,
@@ -15,7 +15,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
 
 const App = () => {
-  const theme = useDailyRecordsStore((s) => s.theme);
+  const theme = useProfileStore((s) => s.theme);
   const systemScheme = useRnColorScheme();
   const { setColorScheme } = useColorScheme();
 

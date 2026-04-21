@@ -1,4 +1,4 @@
-import type { CheckoutStatus } from "@/src/features/checkincheckout/types/Checkinout";
+import type { CheckoutStatus } from "@/features/check-in-out/types/Checkinout";
 import { Text, View } from "react-native";
 
 const config: Record<
@@ -8,17 +8,17 @@ const config: Record<
   completed: {
     label: "Completed",
     light: "bg-emerald-100 border-emerald-300 text-emerald-900",
-    dark: "dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-100",
+    dark: "dark:bg-emerald-950 dark:border-emerald-700 dark:text-white",
   },
   partial: {
     label: "Partial",
     light: "bg-amber-100 border-amber-300 text-amber-950",
-    dark: "dark:bg-amber-950 dark:border-amber-700 dark:text-amber-100",
+    dark: "dark:bg-amber-950 dark:border-amber-700 dark:text-white",
   },
   blocked: {
     label: "Blocked",
     light: "bg-rose-100 border-rose-300 text-rose-950",
-    dark: "dark:bg-rose-950 dark:border-rose-700 dark:text-rose-100",
+    dark: "dark:bg-rose-950 dark:border-rose-700 dark:text-white",
   },
 };
 

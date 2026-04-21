@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AuthUser } from "@/features/authentication/types/Auth.types";
-import { useZustandStore } from "@/store/useZustandStore";
+import type { AuthUser } from "@/features/auth/types/Auth.types";
+import { useProfileStore } from "../store/useProfileStore";
 
 type UseProfileSetupGate = {
   user: AuthUser | null;
 };
 
 export const useProfileSetupGate = ({ user }: UseProfileSetupGate) => {
-  const profile = useZustandStore((state) => state.user);
-  const isUserLoading = useZustandStore((state) => state.isUserLoading);
+  const profile = useProfileStore((state) => state.user);
+  const isUserLoading = useProfileStore((state) => state.isUserLoading);
   const [isProfileSetupVisible, setIsProfileSetupVisible] = useState(false);
 
   const shouldShowProfileSetup = useMemo(

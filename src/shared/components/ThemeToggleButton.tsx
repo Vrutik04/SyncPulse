@@ -1,5 +1,4 @@
-import { useZustandStore } from "@/store/useZustandStore";
-import type { ThemePreference } from "@/src/features/checkincheckout/types/Checkinout";
+import { useProfileStore, type ThemePreference } from "@/features/profile/store/useProfileStore";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Pressable } from "react-native";
@@ -25,8 +24,8 @@ const iconColor: Record<ThemePreference, string> = {
 };
 
 export const ThemeToggleButton = () => {
-  const preference = useZustandStore((state) => state.theme);
-  const ToggleTheme = useZustandStore((state) => state.toggleTheme);
+  const preference = useProfileStore((state) => state.theme);
+  const ToggleTheme = useProfileStore((state) => state.toggleTheme);
 
   return (
     <Pressable
