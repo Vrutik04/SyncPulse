@@ -1,13 +1,6 @@
+import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import type { TabParamList } from "@/navigation/types";
-import { CheckInOutScreen } from "@/features/check-in-out/screens/CheckInOutScreen";
-import { HistoryScreen } from "@/features/history/screens/HistoryScreen";
-import { HomeScreen } from "@/features/home/screens/HomeScreen";
-import { ProfileScreen } from "@/features/profile/screens/ProfileScreen";
 import { Platform, useColorScheme } from "react-native";
-
-const Tab = createBottomTabNavigator<TabParamList>();
 
 const tabIcon = (
   outline: keyof typeof Ionicons.glyphMap,
@@ -26,12 +19,12 @@ const tabIcon = (
   return Icon;
 };
 
-export const TabNavigator = () => {
+export default function TabLayout() {
   const scheme = useColorScheme();
   const dark = scheme === "dark";
 
   return (
-    <Tab.Navigator
+    <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#c45c3e",
@@ -46,38 +39,34 @@ export const TabNavigator = () => {
         tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
       }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
+      <Tabs.Screen
+        name="index"
         options={{
           title: "Home",
           tabBarIcon: tabIcon("home-outline", "home"),
         }}
       />
-      <Tab.Screen
-        name="CheckInOut"
-        component={CheckInOutScreen}
+      <Tabs.Screen
+        name="check-in-out"
         options={{
           title: "Check-in",
           tabBarIcon: tabIcon("create-outline", "create"),
         }}
       />
-      <Tab.Screen
-        name="History"
-        component={HistoryScreen}
+      <Tabs.Screen
+        name="history"
         options={{
           title: "History",
           tabBarIcon: tabIcon("albums-outline", "albums"),
         }}
       />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
+      <Tabs.Screen
+        name="profile"
         options={{
           title: "Profile",
           tabBarIcon: tabIcon("person-outline", "person"),
         }}
       />
-    </Tab.Navigator>
+    </Tabs>
   );
-};
+}

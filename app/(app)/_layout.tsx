@@ -1,13 +1,9 @@
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { Drawer } from "expo-router/drawer";
 import { AppDrawerContent } from "@/navigation/AppDrawerContent";
-import type { DrawerParamList } from "@/navigation/types";
-import { TabNavigator } from "@/navigation/TabNavigator";
 
-const Drawer = createDrawerNavigator<DrawerParamList>();
-
-export const DrawerNavigator = () => {
+export default function AppDrawerLayout() {
   return (
-    <Drawer.Navigator
+    <Drawer
       drawerContent={(props) => <AppDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
@@ -18,13 +14,12 @@ export const DrawerNavigator = () => {
       }}
     >
       <Drawer.Screen
-        name="Main"
-        component={TabNavigator}
+        name="(tabs)"
         options={{
           drawerLabel: "Daily",
           title: "Checksy",
         }}
       />
-    </Drawer.Navigator>
+    </Drawer>
   );
-};
+}

@@ -15,17 +15,14 @@ import {
 import { useState } from "react";
 import { useAuthStore } from "../store/AuthStore";
 import { getEmailError, getPasswordError } from "../utils/AuthValidation";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useRouter } from "expo-router";
 import type { LoginForm } from "../types/Auth.types";
 import { useGoogleAuth } from "../hooks/useGoogleAuth";
 import type { AuthStackParamList } from "@/navigation/types";
 import { AntDesign } from "@expo/vector-icons";
 
-type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
-
 export default function Login() {
-  const navigation = useNavigation<NavigationProp>();
+  const router = useRouter();
   const { login, isLoading, error } = useAuthStore();
   const { promptAsync } = useGoogleAuth();
   const [form, setForm] = useState<LoginForm>({
@@ -133,7 +130,7 @@ export default function Login() {
 
               {/* Forgot password */}
               <TouchableOpacity
-                onPress={() => navigation.navigate("ForgotPassword")}
+                onPress={() => router.push("/(auth)/forgot-password")}
                 className="mb-8 items-end w-full"
               >
                 <Text className="text-red-800 font-medium mr-1">
@@ -166,7 +163,7 @@ export default function Login() {
                 <Text className="text-gray-600 font-medium">
                   Don't have an account?{" "}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+                <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
                   <Text className="text-red-800 font-bold">Sign Up</Text>
                 </TouchableOpacity>
               </View>

@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useAuthStore } from "@/features/auth/store/AuthStore";
 import type { TabParamList } from "@/navigation/types";
 import { useProfileStore } from "@/features/profile/store/useProfileStore";
@@ -11,17 +12,19 @@ import { Image, Text, View } from "react-native";
 
 
 const items: {
-  name: keyof TabParamList;
+  name: string;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
+  route: string;
 }[] = [
-    { name: "Home", label: "Home", icon: "home-outline" },
-    { name: "CheckInOut", label: "Check-in / out", icon: "create-outline" },
-    { name: "History", label: "History", icon: "albums-outline" },
-    { name: "Profile", label: "Profile", icon: "person-outline" },
+    { name: "Home", label: "Home", icon: "home-outline", route: "/(app)/(tabs)" },
+    { name: "CheckInOut", label: "Check-in / out", icon: "create-outline", route: "/(app)/(tabs)/check-in-out" },
+    { name: "History", label: "History", icon: "albums-outline", route: "/(app)/(tabs)/history" },
+    { name: "Profile", label: "Profile", icon: "person-outline", route: "/(app)/(tabs)/profile" },
   ];
 
 export const AppDrawerContent = (props: DrawerContentComponentProps) => {
+  const router = useRouter();
   const { navigation } = props;
 
   const user = useProfileStore((s) => s.user);
@@ -38,8 +41,8 @@ export const AppDrawerContent = (props: DrawerContentComponentProps) => {
     .join("")
     .slice(0, 2);
 
-  const go = (screen: keyof TabParamList) => {
-    navigation.navigate("Main", { screen });
+  const go = (route: string) => {
+    router.push(route as import('expo-router').Href);
     navigation.closeDrawer();
   };
 
@@ -99,14 +102,14 @@ export const AppDrawerContent = (props: DrawerContentComponentProps) => {
       </View>
 
 
-      {items.map(({ name, label, icon }) => (
+      {items.map(({ name, label, icon, route }) => (
         <DrawerItem
           key={name}
           label={label}
           icon={({ color, size }) => (
             <Ionicons name={icon} size={size} color={color} />
           )}
-          onPress={() => go(name)}
+          onPress={() => go(route)}
           activeTintColor="#c45c3e"
           inactiveTintColor="#6b7280"
         />

@@ -8,12 +8,12 @@ import { formatDisplayDate, formatTime, getDateKey } from "@/shared/utils/date";
 import { isMissedCheckout } from "@/shared/utils/missedCheckout";
 import { useCheckinStore } from "@/features/check-in-out/store/useCheckinStore";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 export const HomeScreen = () => {
-  const navigation = useNavigation<HomeScreenNavigationProp>();
+  const router = useRouter();
 
   const today = getDateKey();
   const entries = useCheckinStore((state) => state.entries);
@@ -62,9 +62,7 @@ export const HomeScreen = () => {
           {/* Checkin — tap to open Check-in tab */}
           <Pressable
             className="flex-1"
-            onPress={() =>
-              navigation.navigate("CheckInOut", { tab: "Checkin" })
-            }
+            onPress={() => router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkin" } })}
           >
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
               Check in
@@ -91,9 +89,7 @@ export const HomeScreen = () => {
           {/* Checkout — tap to open Check-out tab */}
           <Pressable
             className="flex-1"
-            onPress={() =>
-              navigation.navigate("CheckInOut", { tab: "Checkout" })
-            }
+            onPress={() => router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkout" } })}
           >
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
               Check out
@@ -128,7 +124,7 @@ export const HomeScreen = () => {
       </Text>
 
       <Pressable
-        onPress={() => navigation.navigate("CheckInOut")}
+        onPress={() => router.push("/(app)/(tabs)/check-in-out")}
         className="mb-5 flex-row items-center p-3 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900"
       >
         <View className="mr-3 h-12 w-12 items-center justify-center bg-orange-100 dark:bg-clay/20 rounded-xl">

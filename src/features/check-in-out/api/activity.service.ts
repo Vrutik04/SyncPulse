@@ -15,7 +15,7 @@ const activitiesCollection = (userId: string) =>
 const activityDoc = (userId: string, date: string) =>
   doc(db, "users", userId, "activities", date);
 
-// ── Save Check-In ─────────────────────────────────────────────────────────────
+// Save Check-In 
 export const saveCheckIn = async (
   userId: string,
   date: string,
@@ -37,7 +37,7 @@ export const saveCheckIn = async (
   }
 };
 
-// ── Save Check-Out ────────────────────────────────────────────────────────────
+// Save Check-Out 
 export const saveCheckOut = async (
   userId: string,
   date: string,
@@ -58,7 +58,7 @@ export const saveCheckOut = async (
   }
 };
 
-// ── Get activity for a specific date ─────────────────────────────────────────
+// Get activity for a specific date 
 export const getActivityByDate = async (
   userId: string,
   date: string,
@@ -75,7 +75,7 @@ export const getActivityByDate = async (
   };
 };
 
-// ── Get all activities (for History screen) ───────────────────────────────────
+//  Get all activities (for History screen) 
 export const getAllActivities = async (
   userId: string,
 ): Promise<DailyRecord[]> => {

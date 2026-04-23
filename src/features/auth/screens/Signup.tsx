@@ -19,15 +19,13 @@ import {
   getPasswordError,
   getConfirmPasswordError,
 } from "../utils/AuthValidation";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { AuthStackParamList } from "@/navigation/types";
+import { useRouter } from "expo-router";
 import type { SignupForm } from "../types/Auth.types";
 import { useGoogleAuth } from "../hooks/useGoogleAuth";
 import { AntDesign } from "@expo/vector-icons";
 
 export default function Signup() {
-  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const router = useRouter();
   const { signup, isLoading, error } = useAuthStore();
   const { promptAsync } = useGoogleAuth();
 
@@ -176,7 +174,7 @@ export default function Signup() {
               <Text className="text-gray-600 font-medium">
                 Already have an account?{" "}
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+              <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
                 <Text className="text-red-800 font-bold">Login</Text>
               </TouchableOpacity>
             </View>

@@ -14,6 +14,7 @@ import type {
 interface CheckinState {
   entries: Record<string, DailyRecord>;
   isActivitiesLoading: boolean;
+  userId: string;
   isActivitiesLoaded: boolean;
   loadActivities: (userId: string) => Promise<void>;
   saveCheckIn: (userId: string, date: string, data: CheckinEntry) => Promise<void>;
@@ -26,6 +27,7 @@ interface CheckinState {
 export const useCheckinStore = create<CheckinState>((set, get) => ({
   entries: {},
   isActivitiesLoading: false,
+  userId: "",
   isActivitiesLoaded: false,
 
   loadActivities: async (userId) => {

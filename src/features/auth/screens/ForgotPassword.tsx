@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -17,14 +17,9 @@ import {
 } from "react-native";
 import { useAuthStore } from "../store/AuthStore";
 import { getEmailError } from "../utils/AuthValidation";
-import type { AuthStackParamList } from "@/navigation/types";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-
-type NavigationProp = NativeStackNavigationProp<AuthStackParamList>
-
 export default function ForgotPassword() {
   const { resetPassword, isLoading, error } = useAuthStore();
-  const navigation = useNavigation<NavigationProp>();
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -128,7 +123,7 @@ export default function ForgotPassword() {
               <Text className="text-gray-600 font-medium">
                 Remember your password?{" "}
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+              <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
                 <Text className="text-red-800 font-bold">Login</Text>
               </TouchableOpacity>
             </View>

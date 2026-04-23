@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
 import { Alert, Pressable, Text, View } from "react-native";
 
 import { useAuthStore } from "@/features/auth/store/AuthStore";
@@ -36,12 +37,9 @@ type UIState = {
 
 // Screen
 
-type Props = {
-  route?: { params?: { tab?: "Checkin" | "Checkout" } };
-};
-
-export const CheckInOutScreen = ({ route }: Props) => {
-  const initialTab: "Checkin" | "Checkout" = route?.params?.tab ?? "Checkin";
+export const CheckInOutScreen = () => {
+  const params = useLocalSearchParams<{ tab?: "Checkin" | "Checkout" }>();
+  const initialTab: "Checkin" | "Checkout" = params?.tab ?? "Checkin";
 
   const today = getDateKey();
   const { entries, saveCheckIn, saveCheckOut } = useCheckinStore();
@@ -66,11 +64,11 @@ export const CheckInOutScreen = ({ route }: Props) => {
 
   // switch tabs.
   useEffect(() => {
-    const tab = route?.params?.tab;
+    const tab = params?.tab;
     if (tab) {
       setUI((prev) => ({ ...prev, activeTab: tab }));
     }
-  }, [route?.params?.tab]);
+  }, [params?.tab]);
 
   // Pre-fill form with today's saved data when it exists.
   useEffect(() => {
