@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import {
-  // @ts-ignore: Known TypeScript issue with Firebase React Native entry points
+  // @ts-ignore
   getReactNativePersistence,
   initializeAuth
 } from "firebase/auth";
