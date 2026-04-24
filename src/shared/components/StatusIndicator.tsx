@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 
 const config: Record<
   CheckoutStatus,
+  
   { label: string; light: string; dark: string }
 > = {
   completed: {
