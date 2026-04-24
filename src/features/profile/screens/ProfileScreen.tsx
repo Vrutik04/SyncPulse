@@ -149,7 +149,7 @@ export const ProfileScreen = () => {
                 {profileImage ? (
                   <Image
                     source={{ uri: profileImage }}
-                    style={{ width: 112, height: 112 }}
+                    className="h-full w-full"
                     resizeMode="cover"
                   />
                 ) : (

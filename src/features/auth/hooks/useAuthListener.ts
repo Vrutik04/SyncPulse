@@ -33,7 +33,7 @@ export const useAuthListener = () => {
             email: user.email,
           });
 
-          // Load daily activities for history and today's state
+          // Load daily activities for all states
           await useCheckinStore.getState().loadActivities(user.uid);
         } catch (error) {
           console.log("Auth listener profile sync error:", error);
