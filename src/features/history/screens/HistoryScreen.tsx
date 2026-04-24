@@ -22,6 +22,7 @@ import { WeeklyDots } from "@/shared/components/WeeklyDots";
 import { formatDisplayDate, formatTime } from "@/shared/utils/date";
 import { computeStreak, weeklyCompletionCount } from "@/shared/utils/progress";
 import { useCheckinStore } from "@/features/check-in-out/store/useCheckinStore";
+import { Ionicons } from "@expo/vector-icons";
 
 // Types
 type FormState = {
@@ -47,6 +48,8 @@ export const HistoryScreen = () => {
   const todayDate = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, "0")}-${String(todayObj.getDate()).padStart(2, "0")}`;
 
   const [activeDate, setActiveDate] = useState(todayDate);
+  const [showCheckinTask, setShowCheckinTask] = useState(false);
+  const [showCheckoutTasks, setShowCheckoutTasks] = useState(false);
   const [calendarDates, setCalendarDates] = useState<string[]>([]);
   const flatListRef = useRef<FlatList<string>>(null);
 
@@ -80,7 +83,7 @@ export const HistoryScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const dates = [];
+      const datesList = [];
       const base = new Date();
       for (let i = -30; i <= 14; i++) {
         const d = new Date(base);
@@ -88,13 +91,13 @@ export const HistoryScreen = () => {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, "0");
         const dd = String(d.getDate()).padStart(2, "0");
-        dates.push(`${yyyy}-${mm}-${dd}`);
+        datesList.push(`${yyyy}-${mm}-${dd}`);
       }
-      setCalendarDates(dates);
+      setCalendarDates(datesList);
       setActiveDate(todayDate);
       setTimeout(() => {
         flatListRef.current?.scrollToIndex({
-          index: 26.2,
+          index: 29.4,
           animated: true,
           viewPosition: 0.5,
         });
@@ -106,8 +109,8 @@ export const HistoryScreen = () => {
     _data: ArrayLike<string> | null | undefined,
     index: number,
   ) => ({
-    length: 76,
-    offset: 76 * index,
+    length: 68, // 56 width + 12 margin (mx-1.5 is 6px each side)
+    offset: 68 * index,
     index,
   });
 
@@ -182,7 +185,7 @@ export const HistoryScreen = () => {
   return (
     <ScreenContainer title="History" subtitle="Your entries by date">
       {/* Calendar  */}
-      <View className="mb-5 border-b border-ink-200 dark:border-ink-800 pb-2">
+      <View className="mb-4 border-b border-ink-100 dark:border-ink-800 pb-3 pt-1">
         <FlatList
           ref={flatListRef}
           horizontal
@@ -190,11 +193,10 @@ export const HistoryScreen = () => {
           data={calendarDates}
           keyExtractor={(item) => item}
           getItemLayout={getItemLayout}
+          contentContainerStyle={{ paddingHorizontal: 4 }}
           renderItem={({ item: dateStr }) => {
             const day = new Date(dateStr);
-            const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
-              day.getDay()
-            ];
+            const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day.getDay()];
             const dayNum = day.getDate();
             const isSelected = dateStr === activeDate;
             const isToday = dateStr === todayDate;
@@ -203,42 +205,43 @@ export const HistoryScreen = () => {
               <Pressable
                 onPress={() => {
                   setActiveDate(dateStr);
+                  setShowCheckinTask(false);
+                  setShowCheckoutTasks(false);
                   Haptics.selectionAsync();
                 }}
-                style={isSelected ? { backgroundColor: "#c45c3e" } : {}}
-                className={`items-center justify-center rounded-2xl p-2 mx-1.5 w-16 h-20 border ${
+                className={`items-center justify-center rounded-[16px] p-2 mx-1.5 w-[56px] h-[72px] shadow-sm ${
                   isSelected
-                    ? "border-clay"
+                    ? "bg-clay border border-clay"
                     : isToday
-                      ? "border-clay bg-white dark:bg-ink-900"
-                      : "border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900"
+                      ? "bg-orange-50 dark:bg-clay/20 border border-clay/30"
+                      : "bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800"
                 }`}
               >
                 <Text
-                  className={`text-xs font-semibold ${
+                  className={`text-[9px] font-bold uppercase tracking-wider ${
                     isSelected
-                      ? "text-white"
+                      ? "text-white/90"
                       : isToday
                         ? "text-clay dark:text-clay-muted"
-                        : "text-ink-500 dark:text-ink-400"
+                        : "text-ink-400 dark:text-ink-500"
                   }`}
                 >
                   {dayName}
                 </Text>
                 <Text
-                  className={`text-lg font-bold mt-1 ${
+                  className={`text-lg font-extrabold mt-0.5 ${
                     isSelected
                       ? "text-white"
                       : isToday
                         ? "text-clay dark:text-clay-muted"
-                        : "text-ink-900 dark:text-ink-100"
+                        : "text-ink-900 dark:text-ink-50"
                   }`}
                 >
                   {dayNum}
                 </Text>
                 {isToday && (
                   <View
-                    className={`w-1.5 h-1.5 rounded-full mt-1 ${
+                    className={`w-1 h-1 rounded-full mt-1 ${
                       isSelected ? "bg-white" : "bg-clay dark:bg-clay-muted"
                     }`}
                   />
@@ -249,145 +252,194 @@ export const HistoryScreen = () => {
         />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Selected date data */}
-        <View className="mb-4 bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 rounded-2xl p-4 shadow-sm">
-          <Text className="font-bold text-lg mb-4 text-ink-900 dark:text-ink-50">
-            {formatDisplayDate(activeDate)}{" "}
-            {isTodaySelected && (
-              <Text className="text-clay dark:text-clay-muted text-sm font-semibold">
-                (Today)
-              </Text>
-            )}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 4 }}>
+        {/* Selected date header */}
+        <View className="mb-4 flex-row items-center justify-between px-1">
+          <Text className="font-extrabold text-xl text-clay muted dark:text-ink-50 tracking-tight">
+            {formatDisplayDate(activeDate)}
           </Text>
-
-          {/* Check-in card */}
-          <View className="mb-4 bg-ink-50 dark:bg-ink-800 p-4 rounded-xl border border-ink-100 dark:border-ink-700">
-            <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-sm font-bold text-ink-400 dark:text-ink-500 uppercase tracking-widest">
-                Checkin
+          {isTodaySelected && (
+            <View className="bg-clay/10 dark:bg-clay/20 px-2.5 py-1 rounded-full border border-clay/20 dark:border-clay/30">
+              <Text className="text-clay dark:text-clay-muted text-[10px] font-bold uppercase tracking-widest">
+                Today
               </Text>
-              {work?.Checkin ? (
-                <Pressable onPress={() => openModal(activeDate, "Checkin")}>
-                  <Text className="text-clay dark:text-clay-muted font-semibold">
-                    {isTodaySelected ? "Edit" : "View"}
+            </View>
+          )}
+        </View>
+
+        {/* Check-in card */}
+        <View className="mb-4 bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800 rounded-2xl p-4 shadow-sm">
+          <View className="flex-row justify-between items-center mb-3">
+            <View className="flex-row items-center">
+              <View className="h-7 w-7 rounded-full bg-orange-50 dark:bg-clay/10 items-center justify-center mr-2.5">
+                <Ionicons name="sunny-outline" size={14} color="#c45c3e" />
+              </View>
+              <Text className="text-sm font-bold text-ink-900 dark:text-ink-50 uppercase tracking-widest">
+                Check In
+              </Text>
+            </View>
+            {work?.Checkin ? (
+              <Pressable onPress={() => openModal(activeDate, "Checkin")} className="bg-ink-50 dark:bg-ink-800 px-3 py-1.5 rounded-full active:opacity-70">
+                <Text className="text-ink-700 dark:text-ink-300 font-bold text-[10px] uppercase tracking-wider">
+                  {isTodaySelected ? "Edit" : "View"}
+                </Text>
+              </Pressable>
+            ) : (
+              isTodaySelected && (
+                <Pressable onPress={() => openModal(activeDate, "Checkin")} className="bg-clay/10 px-3 py-1.5 rounded-full active:opacity-70">
+                  <Text className="text-clay dark:text-clay-muted font-bold text-[10px] uppercase tracking-wider">
+                    Add
                   </Text>
                 </Pressable>
-              ) : (
-                isTodaySelected && (
-                  <Pressable onPress={() => openModal(activeDate, "Checkin")}>
-                    <Text className="text-clay dark:text-clay-muted font-semibold">
-                      Add
-                    </Text>
-                  </Pressable>
-                )
-              )}
-            </View>
-
-            {work?.Checkin ? (
-              <View>
-                <Text className="font-semibold text-ink-900 dark:text-ink-50 text-base mb-1">
-                  {work.Checkin.projectName}
-                </Text>
-                <Text className="text-ink-600 dark:text-ink-300 leading-5 mb-2">
-                  {work.Checkin.task}
-                </Text>
-                <Text className="text-xs text-ink-400 dark:text-ink-500 font-medium">
-                  {formatTime(work.Checkin.checkedInAt)}
-                </Text>
-              </View>
-            ) : (
-              <Text className="text-ink-400 dark:text-ink-500 text-sm">
-                No check-in data
-              </Text>
+              )
             )}
           </View>
 
-          {/* Check-out card */}
-          <View className="bg-ink-50 dark:bg-ink-800 p-4 rounded-xl border border-ink-100 dark:border-ink-700 mb-2">
-            <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-sm font-bold text-ink-400 dark:text-ink-500 uppercase tracking-widest">
+          {work?.Checkin ? (
+            <View className="ml-[14px] border-l-2 border-ink-100 dark:border-ink-800 pl-4 py-1">
+              <View className="flex-row justify-between items-center mb-2">
+                <View className="flex-row items-center gap-1">
+                  <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
+                <Text className="text-xs font-semibold text dark:text-ink-50">
+                  {work.Checkin.checkInTime || formatTime(work.Checkin.checkedInAt)}
+                </Text>
+                
+                </View>
+                <Pressable onPress={() => setShowCheckinTask(!showCheckinTask)}>
+                  <Text className="text-orange-700 dark:text-orange-400 font-medium text-xs">
+                    {showCheckinTask ? "Hide Tasks" : "View Tasks"}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {showCheckinTask && (
+                <View className="bg-ink-50 dark:bg-ink-800 rounded-xl p-3 border border-ink-100 dark:border-ink-700 mt-2">
+                  <Text className="font-bold text-ink-900 dark:text-ink-50 text-sm mb-1">
+                    {work.Checkin.projectName}
+                  </Text>
+                  <Text className="text-ink-500 dark:text-ink-400 text-xs leading-4">
+                    {work.Checkin.task}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <Text className="text-ink-400 dark:text-ink-500 text-xs italic ml-[14px] pl-4 py-1 border-l-2 border-ink-100 dark:border-ink-800">
+              No check-in record for this day.
+            </Text>
+          )}
+        </View>
+
+        {/* Check-out card */}
+        <View className="mb-6 bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800 rounded-2xl p-4 shadow-sm">
+          <View className="flex-row justify-between items-center mb-3">
+            <View className="flex-row items-center">
+              <View className="h-7 w-7 rounded-full bg-ink-50 dark:bg-ink-800 items-center justify-center mr-2.5">
+                <Ionicons name="moon-outline" size={14} color="#6b7280" />
+              </View>
+              <Text className="text-sm font-bold text-ink-900 dark:text-ink-50 uppercase tracking-widest">
                 Check Out
               </Text>
-              {work?.Checkout ? (
-                <Pressable onPress={() => openModal(activeDate, "Checkout")}>
-                  <Text className="text-clay dark:text-clay-muted font-semibold">
-                    {isTodaySelected ? "Edit" : "View"}
+            </View>
+            {work?.Checkout ? (
+              <Pressable onPress={() => openModal(activeDate, "Checkout")} className="bg-ink-50 dark:bg-ink-800 px-3 py-1.5 rounded-full active:opacity-70">
+                <Text className="text-ink-700 dark:text-ink-300 font-bold text-[10px] uppercase tracking-wider">
+                  {isTodaySelected ? "Edit" : "View"}
+                </Text>
+              </Pressable>
+            ) : (
+              isTodaySelected && (
+                <Pressable onPress={() => openModal(activeDate, "Checkout")} className="bg-clay/10 px-3 py-1.5 rounded-full active:opacity-70">
+                  <Text className="text-clay dark:text-clay-muted font-bold text-[10px] uppercase tracking-wider">
+                    Add
                   </Text>
                 </Pressable>
-              ) : (
-                isTodaySelected && (
-                  <Pressable onPress={() => openModal(activeDate, "Checkout")}>
-                    <Text className="text-clay dark:text-clay-muted font-semibold">
-                      Add
-                    </Text>
-                  </Pressable>
-                )
-              )}
-            </View>
-
-            {work?.Checkout ? (
-              <View>
-                {work.Checkout.works && work.Checkout.works.length > 0 ? (
-                  work.Checkout.works.map((w: WorkItem, idx: number) => (
-                    <View
-                      key={idx}
-                      className="flex-row justify-between items-start mb-2 mt-1"
-                    >
-                      <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
-                        {w.text}
-                      </Text>
-                      <View className="ml-2">
-                        <StatusIndicator status={w.status} />
-                      </View>
-                    </View>
-                  ))
-                ) : (
-                  <View className="flex-row justify-between items-start mb-2 mt-1">
-                    <Text className="text-ink-700 dark:text-ink-200 leading-5 flex-1 pr-2">
-                      {work.Checkout.workCompleted as string}
-                    </Text>
-                    <View className="ml-2">
-                      <StatusIndicator
-                        status={work.Checkout.status || "completed"}
-                      />
-                    </View>
-                  </View>
-                )}
-                <Text className="text-xs text-ink-400 dark:text-ink-500 font-medium mt-1">
-                  {formatTime(work.Checkout.checkedOutAt)}
-                </Text>
-              </View>
-            ) : (
-              <Text className="text-ink-400 dark:text-ink-500 text-sm">
-                No check-out data
-              </Text>
+              )
             )}
           </View>
+
+          {work?.Checkout ? (
+            <View className="ml-[14px] border-l-2 border-transparent pl-4 py-1">
+              <View className="flex-row justify-between items-center mb-2">
+                <View className="flex-row items-center gap-1">
+                  <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
+                <Text className="text-xs font-semibold text dark:text-ink-50">
+                  {work.Checkout.checkOutTime || formatTime(work.Checkout.checkedOutAt)}
+                </Text>
+                </View>
+                <Pressable onPress={() => setShowCheckoutTasks(!showCheckoutTasks)}>
+                  <Text className="text-orange-700 dark:text-orange-400 font-medium text-xs">
+                    {showCheckoutTasks ? "Hide Tasks" : "View Tasks"}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {showCheckoutTasks && (
+                <View className="bg-ink-50 dark:bg-ink-800 rounded-xl p-3 border border-ink-100 dark:border-ink-700 mt-2">
+                  <FlatList
+                    data={work.Checkout.works && work.Checkout.works.length > 0 
+                      ? work.Checkout.works 
+                      : (work.Checkout.workCompleted ? [{ text: work.Checkout.workCompleted as string, status: work.Checkout.status || "completed" }] : [])}
+                    keyExtractor={(_, index) => index.toString()}
+                    scrollEnabled={false}
+                    renderItem={({ item }) => (
+                      <View className="flex-row justify-between items-start mb-2 border-b border-ink-100 dark:border-ink-700/50 pb-2 last:border-0 last:mb-0 last:pb-0">
+                        <Text className="text-ink-700 dark:text-ink-200 text-xs leading-4 flex-1 pr-2">
+                          {item.text}
+                        </Text>
+                        <View className="ml-2">
+                          <StatusIndicator status={item.status || "completed"} />
+                        </View>
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
+            </View>
+          ) : (
+            <Text className="text-ink-400 dark:text-ink-500 text-xs italic ml-[14px] pl-4 py-1">
+              No check-out record for this day.
+            </Text>
+          )}
         </View>
 
         {/* Stats section */}
-        <View className="mb-8 mt-2 p-4 border border-ink-200 dark:border-ink-700 rounded-2xl bg-white dark:bg-ink-900 shadow-sm">
-          <Text className="font-bold text-ink-900 dark:text-ink-50 mb-4 text-lg">
+        <View className="mb-4">
+          <Text className="text-xs font-bold text-ink-900 dark:text-ink-50 mb-3 px-2 uppercase tracking-wider">
             Your Progress
           </Text>
-          <View className="flex-row justify-between mb-3">
-            <Text className="text-ink-600 dark:text-ink-300">
-              Current Streak
-            </Text>
-            <Text className="font-semibold text-clay dark:text-clay-muted">
-              🔥 {streak} days
-            </Text>
+          <View className="flex-row gap-3 mb-3">
+            {/* Streak */}
+            <View className="flex-1 bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800 rounded-2xl p-4 shadow-sm items-center">
+              <View className="h-8 w-8 rounded-full bg-orange-50 dark:bg-clay/10 items-center justify-center mb-2">
+                <Ionicons name="flame" size={16} color="#c45c3e" />
+              </View>
+              <Text className="text-xl font-black text-ink-900 dark:text-ink-50 mb-0.5">
+                {streak}
+              </Text>
+              <Text className="text-[10px] font-semibold text-ink-500 dark:text-ink-400 tracking-wide uppercase">
+                Day Streak
+              </Text>
+            </View>
+
+            {/* Total Checkins */}
+            <View className="flex-1 bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800 rounded-2xl p-4 shadow-sm items-center">
+              <View className="h-8 w-8 rounded-full bg-ink-50 dark:bg-ink-800 items-center justify-center mb-2 border border-ink-100 dark:border-ink-700">
+                <Ionicons name="calendar-outline" size={16} color="#606882" />
+              </View>
+              <Text className="text-xl font-black text-ink-900 dark:text-ink-50 mb-0.5">
+                {dates.length}
+              </Text>
+              <Text className="text-[10px] font-semibold text-ink-500 dark:text-ink-400 tracking-wide uppercase">
+                Check-Ins
+              </Text>
+            </View>
           </View>
-          <View className="flex-row justify-between mb-4">
-            <Text className="text-ink-600 dark:text-ink-300">
-              Total Check-Ins
-            </Text>
-            <Text className="font-semibold text-ink-800 dark:text-ink-100">
-              {dates.length} days
-            </Text>
+          
+          <View className="bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800 rounded-2xl p-4 shadow-sm items-center">
+            <Text className="text-xs font-bold text-ink-900 dark:text-ink-50 mb-2">Weekly Completion</Text>
+            <WeeklyDots total={5} filled={weekDone} />
           </View>
-          <WeeklyDots total={7} filled={weekDone} />
         </View>
       </ScrollView>
 
@@ -398,14 +450,16 @@ export const HistoryScreen = () => {
         transparent={true}
         onRequestClose={closeModal}
       >
-        <View className="flex-1 justify-end bg-black/40 dark:bg-black/60">
-          <View
-            className="bg-paper dark:bg-ink-950 px-5 pt-6 pb-8 rounded-t-3xl"
-            style={{ maxHeight: "90%" }}
-          >
+        <View className="flex-1 justify-end bg-black/60">
+          <View className="bg-white dark:bg-ink-900 rounded-t-[28px] p-5 h-[85%] shadow-2xl">
+            {/* Handle bar */}
+            <View className="items-center mb-4">
+              <View className="h-1.5 w-10 bg-ink-200 dark:bg-ink-700 rounded-full" />
+            </View>
+
             {/* Modal header */}
-            <View className="py-2 mb-4 items-center">
-              <Text className="text-clay dark:text-clay-muted text-2xl font-bold text-center">
+            <View className="flex-row justify-between items-center mb-5">
+              <Text className="text-xl font-extrabold text-ink-900 dark:text-ink-50 tracking-tight">
                 {modal.selectedDate === todayDate
                   ? modal.editType === "Checkin"
                     ? "Edit Check-in"
@@ -414,9 +468,15 @@ export const HistoryScreen = () => {
                     ? "View Check-in"
                     : "View Check-out"}
               </Text>
+              <Pressable
+                onPress={closeModal}
+                className="w-8 h-8 items-center justify-center rounded-full bg-ink-50 dark:bg-ink-800 active:bg-ink-100 dark:active:bg-ink-700"
+              >
+                <Ionicons name="close" size={20} color="#a8aebc" />
+              </Pressable>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
               {modal.editType === "Checkin" && (
                 <View
                   pointerEvents={
@@ -444,13 +504,13 @@ export const HistoryScreen = () => {
                       onWorksChange={(val) => updateForm("works", val)}
                     />
                   ) : (
-                    <View className="bg-ink-50 dark:bg-ink-800 border border-ink-200 dark:border-ink-700 rounded-xl p-4">
+                    <View className="bg-ink-50 dark:bg-ink-800 border border-ink-100 dark:border-ink-800 rounded-xl p-3 mt-2">
                       {form.works.map((w, index) => (
                         <View
                           key={index}
-                          className="flex-row justify-between items-start mb-3 border-b border-ink-100 dark:border-ink-700 pb-3"
+                          className="flex-row justify-between items-start mb-2 border-b border-ink-100 dark:border-ink-700 pb-2 last:border-0 last:pb-0 last:mb-0"
                         >
-                          <Text className="text-ink-800 dark:text-ink-100 flex-1 pr-3">
+                          <Text className="text-ink-800 dark:text-ink-100 flex-1 pr-3 font-medium text-sm">
                             {w.text}
                           </Text>
                           <StatusIndicator status={w.status} />
@@ -461,20 +521,11 @@ export const HistoryScreen = () => {
                 </View>
               )}
 
-              <View className="mt-8">
+              <View className="mt-6">
                 {modal.selectedDate === todayDate && (
                   <PrimaryButton label="Save Changes" onPress={handleSave} />
                 )}
               </View>
-
-              <Pressable
-                onPress={closeModal}
-                className="mt-4 py-4 rounded-xl items-center border border-ink-200 dark:border-ink-700"
-              >
-                <Text className="text-base font-semibold text-ink-500 dark:text-ink-400">
-                  {modal.selectedDate === todayDate ? "Cancel" : "Close"}
-                </Text>
-              </Pressable>
             </ScrollView>
           </View>
         </View>

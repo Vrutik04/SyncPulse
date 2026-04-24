@@ -10,7 +10,7 @@ import { useCheckinStore } from "@/features/check-in-out/store/useCheckinStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Alert, Animated, PanResponder, Pressable, Text, View } from "react-native";
 
 export const HomeScreen = () => {
   const router = useRouter();
@@ -29,6 +29,69 @@ export const HomeScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const alreadyChecked = useRef(false);
 
+  // Animation values for the quick action button
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 10,
+      onPanResponderMove: (_, gesture) => {
+        // Clamp movement to 100px limit
+        const limit = 100;
+        const clampedX = Math.max(-limit, Math.min(limit, gesture.dx));
+        translateX.setValue(clampedX);
+      },
+      onPanResponderRelease: (_, gesture) => {
+        const threshold = 80;
+        
+        if (isCheckinDone && isCheckoutDone) {
+          if (Math.abs(gesture.dx) > threshold) {
+            Alert.alert( "Check in and check out done for today");
+          }
+        } else if (!isCheckinDone) {
+          // If Check In card, swipe right to navigate
+          if (gesture.dx > threshold) {
+            router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkin" } });
+          }
+        } else if (isCheckinDone && !isCheckoutDone) {
+          // If Check Out card, swipe left to navigate
+          if (gesture.dx < -threshold) {
+            router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkout" } });
+          }
+        }
+        
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 5,
+        }).start();
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      }
+    })
+  ).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 3,
+      tension: 40,
+    }).start();
+  };
+
   useEffect(() => {
     if (!isActivitiesLoaded) return;
 
@@ -39,6 +102,24 @@ export const HomeScreen = () => {
       setShowModal(true);
     }
   }, [isActivitiesLoaded, entries]);
+
+  // Determine main action based on status
+  let actionTitle = "Check In";
+  let actionSubtitle = "Start your workday";
+  let actionIcon: keyof typeof Ionicons.glyphMap = "log-in-outline";
+  let actionRoute = "Checkin";
+
+  if (isCheckinDone && !isCheckoutDone) {
+    actionTitle = "Check Out";
+    actionSubtitle = "Wrap up your day";
+    actionIcon = "log-out-outline";
+    actionRoute = "Checkout";
+  } else if (isCheckinDone && isCheckoutDone) {
+    actionTitle = "Done";
+    actionSubtitle = "All activities done";
+    actionIcon = "checkmark-done-circle-outline";
+    actionRoute = "Checkin";
+  }
 
   return (
     <ScreenContainer
@@ -61,7 +142,7 @@ export const HomeScreen = () => {
         <View className="bg-white dark:bg-ink-800 rounded-2xl p-4 border border-orange-100 dark:border-ink-700 flex-row justify-between">
           {/* Checkin — tap to open Check-in tab */}
           <Pressable
-            className="flex-1"
+            className="flex-1 active:opacity-60"
             onPress={() => router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkin" } })}
           >
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
@@ -88,7 +169,7 @@ export const HomeScreen = () => {
 
           {/* Checkout — tap to open Check-out tab */}
           <Pressable
-            className="flex-1"
+            className="flex-1 active:opacity-60"
             onPress={() => router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkout" } })}
           >
             <Text className="text-xs text-ink-400 dark:text-ink-400 font-medium mb-1 uppercase tracking-wider">
@@ -118,107 +199,156 @@ export const HomeScreen = () => {
         <DateTimeCard />
       </View>
 
-      {/* Quick navigate button */}
-      <Text className="mb-2 text-xs text-ink-400 dark:text-ink-500 uppercase tracking-wider">
-        Checkin / Check Out
-      </Text>
-
-      <Pressable
-        onPress={() => router.push("/(app)/(tabs)/check-in-out")}
-        className="mb-5 flex-row items-center p-3 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900"
-      >
-        <View className="mr-3 h-12 w-12 items-center justify-center bg-orange-100 dark:bg-clay/20 rounded-xl">
-          <Ionicons name="create" size={24} color="#c45c3e" />
+      {/* Circular Quick Action Button */}
+      <View className="items-center justify-center mb-8 mt-2">
+        <View className="rounded-3xl w-full p-4 bg-clay/10 dark:bg-clay/10">
+          <View className={`rounded-3xl p-4 bg-orange-50 dark:bg-clay/20 ${
+            progress === 1 ? 'items-end' : progress === 0 ? 'items-start' : 'items-center'
+          }`}>
+            <View {...panResponder.panHandlers}>
+              <Pressable
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                onPress={() => {
+                  if (isCheckinDone && isCheckoutDone) {
+                    Alert.alert("Check in and check out done for today");
+                  } else {
+                    router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: actionRoute } });
+                  }
+                }}
+              >
+                <Animated.View
+                  className="h-28 w-28 rounded-3xl items-center justify-center shadow-lg bg-clay"
+                  style={{
+                    transform: [
+                      { scale: scaleAnim },
+                      { translateX: translateX }
+                    ],
+                    elevation: 10,
+                    shadowColor: "#c45c3e",
+                    shadowOffset: { width: 0, height: 10 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 20
+                  }}
+                >
+                  <View className="items-center justify-center mb-2">
+                    <Ionicons 
+                      name={actionIcon} 
+                      size={28} 
+                      color="#ffffff" 
+                    />
+                  </View>
+                  <Text className="text-lg font-extrabold tracking-tight text-white">
+                    {actionTitle}
+                  </Text>
+                  {actionSubtitle && (
+                    <Text className="text-xs font-medium mt-1 text-white/80">
+                      {actionSubtitle}
+                    </Text>
+                  )}
+                </Animated.View>
+              </Pressable>
+            </View>
+          </View>
         </View>
-        <View className="flex-1">
-          <Text className="font-semibold text-ink-900 dark:text-ink-50">
-            Checkin
-          </Text>
-          <Text className="text-sm text-ink-400 dark:text-ink-400">
-            Please Check-in
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-      </Pressable>
-
-      {/* Today's Activity */}
-      <Text className="mb-2 text-xs text-ink-400 dark:text-ink-500 uppercase tracking-wider">
-        Today
-      </Text>
-
-      {/* Checkin summary */}
-      <View className="mb-3 p-4 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900">
-        <Text className="text-xs text-ink-400 dark:text-ink-500 mb-1">
-          Check-in
-        </Text>
-        {isCheckinDone ? (
-          <>
-            <Text className="font-semibold text-ink-900 dark:text-ink-50">
-              {todayEntry?.Checkin?.projectName}
-            </Text>
-            <Text className="text-sm text-ink-600 dark:text-ink-300">
-              {todayEntry?.Checkin?.task}
-            </Text>
-            <Text className="text-xs text-ink-400 dark:text-ink-500 mt-1">
-              {todayEntry?.Checkin?.checkInTime || formatTime(todayEntry?.Checkin?.checkedInAt || "")}
-            </Text>
-          </>
-        ) : (
-          <Text className="text-sm text-ink-400 dark:text-ink-500">
-            Not filled yet
-          </Text>
-        )}
       </View>
 
-      {/* Checkout summary */}
-      <View className="p-4 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900">
-        <Text className="text-xs text-ink-400 dark:text-ink-500 mb-1">
-          Check-out
-        </Text>
-        {isCheckoutDone ? (
-          <>
-            {todayEntry?.Checkout?.works?.map((w: WorkItem, idx: number) => (
-              <View key={idx} className="flex-row justify-between items-center mb-1">
-                <Text className="text-sm text-ink-700 dark:text-ink-200 flex-1 pr-2">
-                  {w.text}
-                </Text>
-                <View className="ml-2">
-                  <StatusIndicator
-                    status={w.status || "completed"}
-                  />
-                </View>
-              </View>
-            ))}
-            <Text className="text-xs text-ink-400 dark:text-ink-500 mt-2">
-              {todayEntry?.Checkout?.checkOutTime || formatTime(todayEntry?.Checkout?.checkedOutAt || "")}
-            </Text>
-          </>
-        ) : (
-          <Text className="text-sm text-ink-400 dark:text-ink-500">
-            Not filled yet
+      {/* Swipe Hint Text */}
+      {progress < 1 && (
+        <View className={`-mt-4 mb-6 px-10 ${progress === 0 ? 'items-start' : 'items-center'}`}>
+          <Text className="text-xs text-clay dark:text-clay-muted font-medium opacity-60 italic">
+            {progress === 0 ? "Swipe to Check In" : "Swipe to Check Out"}
           </Text>
-        )}
-      </View>
+        </View>
+      )}
 
-      {/* Progress bar */}
-      <View className="mb-5 mt-5">
-        <Text className="text-xs text-ink-400 dark:text-ink-500 mb-2 text-center">
-          Today's Progress
-        </Text>
-        <View className="h-3 w-full bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+      {/* Progress Section */}
+      <View className="mb-6 bg-white dark:bg-ink-900 rounded-2xl p-5 border border-ink-100 dark:border-ink-800 shadow-sm">
+        <View className="flex-row justify-between items-end mb-3">
+          <Text className="text-sm font-bold text-ink-900 dark:text-ink-50">
+            Daily Progress
+          </Text>
+          <Text className="text-xs font-medium text-clay dark:text-clay-muted">
+             {progress === 1
+              ? "100%"
+              : progress === 0.5
+                ? "50%"
+                : "0%"}
+          </Text>
+        </View>
+        <View className="h-2 w-full bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
           <View
             style={{ width: `${progress * 100}%` }}
             className="h-full bg-clay dark:bg-clay-muted rounded-full"
           />
         </View>
-        <Text className="text-xs text-ink-400 dark:text-ink-500 mt-2 text-center">
+        <Text className="text-xs text-ink-400 dark:text-ink-500 mt-3 text-center">
           {progress === 1
-            ? "Completed 🎉"
+            ? "Great job! You've completed your day."
             : progress === 0.5
-              ? "Half done – keep going!"
-              : "Not started yet"}
+              ? "You're checked in. Don't forget to check out!"
+              : "Ready to start your day?"}
         </Text>
       </View>
+
+      {/* Activity Timeline */}
+      {(isCheckinDone || isCheckoutDone) && (
+        <View className="mb-8">
+          <Text className="text-base font-bold text-ink-900 dark:text-ink-50 mb-4 px-1">
+            Activity Details
+          </Text>
+          
+          <View className="bg-white dark:bg-ink-900 rounded-2xl p-5 border border-ink-100 dark:border-ink-800 shadow-sm">
+            {/* Checkin Summary */}
+            {isCheckinDone && (
+              <View className={isCheckoutDone ? "mb-6" : ""}>
+                <View className="flex-row items-center mb-2">
+                  <View className="h-2 w-2 rounded-full bg-clay mr-3" />
+                  <Text className="text-sm font-semibold text-ink-800 dark:text-ink-100">
+                    Started Work
+                  </Text>
+                  <Text className="text-xs text-ink-400 ml-auto">
+                    {todayEntry?.Checkin?.checkInTime || formatTime(todayEntry?.Checkin?.checkedInAt || "")}
+                  </Text>
+                </View>
+                <View className={`ml-1 pl-4 border-l-2 ${isCheckoutDone ? "border-ink-100 dark:border-ink-800" : "border-transparent"}`}>
+                  <Text className="font-medium text-ink-900 dark:text-ink-50 mb-1">
+                    {todayEntry?.Checkin?.projectName}
+                  </Text>
+                  <Text className="text-sm text-ink-600 dark:text-ink-300">
+                    {todayEntry?.Checkin?.task}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Checkout Summary */}
+            {isCheckoutDone && (
+              <View>
+                <View className="flex-row items-center mb-2">
+                  <View className="h-2 w-2 rounded-full bg-green-500 mr-3" />
+                  <Text className="text-sm font-semibold text-ink-800 dark:text-ink-100">
+                    Completed Work
+                  </Text>
+                  <Text className="text-xs text-ink-400 ml-auto">
+                    {todayEntry?.Checkout?.checkOutTime || formatTime(todayEntry?.Checkout?.checkedOutAt || "")}
+                  </Text>
+                </View>
+                <View className="ml-1 pl-4 border-l-2 border-transparent">
+                  {todayEntry?.Checkout?.works?.map((w: WorkItem, idx: number) => (
+                    <View key={idx} className="flex-row justify-between items-center mb-2 bg-ink-50 dark:bg-ink-800/50 p-2 rounded-lg">
+                      <Text className="text-sm text-ink-700 dark:text-ink-200 flex-1 pr-2">
+                        {w.text}
+                      </Text>
+                      <StatusIndicator status={w.status || "completed"} />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
     </ScreenContainer>
   );
 };
