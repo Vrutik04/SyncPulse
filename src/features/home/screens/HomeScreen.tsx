@@ -10,7 +10,7 @@ import { useCheckinStore } from "@/features/check-in-out/store/useCheckinStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Animated, PanResponder, Pressable, Text, View } from "react-native";
+import { Alert, Animated, Pressable, Text, View } from "react-native";
 
 export const HomeScreen = () => {
   const router = useRouter();
@@ -31,50 +31,8 @@ export const HomeScreen = () => {
 
   // Animation values for the quick action button
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 10,
-      onPanResponderMove: (_, gesture) => {
-        // Clamp movement to 100px limit
-        const limit = 100;
-        const clampedX = Math.max(-limit, Math.min(limit, gesture.dx));
-        translateX.setValue(clampedX);
-      },
-      onPanResponderRelease: (_, gesture) => {
-        const threshold = 80;
-        
-        if (isCheckinDone && isCheckoutDone) {
-          if (Math.abs(gesture.dx) > threshold) {
-            Alert.alert( "Check in and check out done for today");
-          }
-        } else if (!isCheckinDone) {
-          // If Check In card, swipe right to navigate
-          if (gesture.dx > threshold) {
-            router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkin" } });
-          }
-        } else if (isCheckinDone && !isCheckoutDone) {
-          // If Check Out card, swipe left to navigate
-          if (gesture.dx < -threshold) {
-            router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: "Checkout" } });
-          }
-        }
-        
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-          friction: 5,
-        }).start();
-      },
-      onPanResponderTerminate: () => {
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      }
-    })
-  ).current;
+
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -103,7 +61,7 @@ export const HomeScreen = () => {
     }
   }, [isActivitiesLoaded, entries]);
 
-  // Determine main action based on status
+  //  action based on status
   let actionTitle = "Check In";
   let actionSubtitle = "Start your workday";
   let actionIcon: keyof typeof Ionicons.glyphMap = "log-in-outline";
@@ -201,66 +159,52 @@ export const HomeScreen = () => {
 
       {/* Circular Quick Action Button */}
       <View className="items-center justify-center mb-8 mt-2">
-        <View className="rounded-3xl w-full p-4 bg-clay/10 dark:bg-clay/10">
-          <View className={`rounded-3xl p-4 bg-orange-50 dark:bg-clay/20 ${
+        <View className="rounded-full p-4 bg-clay/10 dark:bg-clay/10">
+          <View className={`rounded-full p-4 bg-clay/20 dark:bg-clay/20 ${
             progress === 1 ? 'items-end' : progress === 0 ? 'items-start' : 'items-center'
           }`}>
-            <View {...panResponder.panHandlers}>
-              <Pressable
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
-                onPress={() => {
-                  if (isCheckinDone && isCheckoutDone) {
-                    Alert.alert("Check in and check out done for today");
-                  } else {
-                    router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: actionRoute } });
-                  }
+            <Pressable
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              onPress={() => {
+                if (isCheckinDone && isCheckoutDone) {
+                  Alert.alert("Check in and check out done for today");
+                } else {
+                  router.push({ pathname: "/(app)/(tabs)/check-in-out", params: { tab: actionRoute } });
+                }
+              }}
+            >
+              <Animated.View
+                className="h-32 w-32 rounded-full items-center justify-center shadow-xl bg-clay"
+                style={{
+                  transform: [{ scale: scaleAnim }],
+                  elevation: 12,
+                  shadowColor: "#c45c3e",
+                  shadowOffset: { width: 0, height: 10 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 20
                 }}
               >
-                <Animated.View
-                  className="h-28 w-28 rounded-3xl items-center justify-center shadow-lg bg-clay"
-                  style={{
-                    transform: [
-                      { scale: scaleAnim },
-                      { translateX: translateX }
-                    ],
-                    elevation: 10,
-                    shadowColor: "#c45c3e",
-                    shadowOffset: { width: 0, height: 10 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 20
-                  }}
-                >
-                  <View className="items-center justify-center mb-2">
-                    <Ionicons 
-                      name={actionIcon} 
-                      size={28} 
-                      color="#ffffff" 
-                    />
-                  </View>
-                  <Text className="text-lg font-extrabold tracking-tight text-white">
-                    {actionTitle}
+                <View className="items-center justify-center mb-1">
+                  <Ionicons 
+                    name={actionIcon} 
+                    size={34} 
+                    color="#ffffff" 
+                  />
+                </View>
+                <Text className="text-lg font-extrabold tracking-tight text-white">
+                  {actionTitle}
+                </Text>
+                {actionSubtitle && (
+                  <Text className="text-[10px] font-medium mt-1 text-white/80 uppercase tracking-widest text-center px-2">
+                    {actionSubtitle}
                   </Text>
-                  {actionSubtitle && (
-                    <Text className="text-xs font-medium mt-1 text-white/80">
-                      {actionSubtitle}
-                    </Text>
-                  )}
-                </Animated.View>
-              </Pressable>
-            </View>
+                )}
+              </Animated.View>
+            </Pressable>
           </View>
         </View>
       </View>
-
-      {/* Swipe Hint Text */}
-      {progress < 1 && (
-        <View className={`-mt-4 mb-6 px-10 ${progress === 0 ? 'items-start' : 'items-center'}`}>
-          <Text className="text-xs text-clay dark:text-clay-muted font-medium opacity-60 italic">
-            {progress === 0 ? "Swipe to Check In" : "Swipe to Check Out"}
-          </Text>
-        </View>
-      )}
 
       {/* Progress Section */}
       <View className="mb-6 bg-white dark:bg-ink-900 rounded-2xl p-5 border border-ink-100 dark:border-ink-800 shadow-sm">
@@ -329,8 +273,9 @@ export const HomeScreen = () => {
                   <View className="h-2 w-2 rounded-full bg-green-500 mr-3" />
                   <Text className="text-sm font-semibold text-ink-800 dark:text-ink-100">
                     Completed Work
+
                   </Text>
-                  <Text className="text-xs text-ink-400 ml-auto">
+                  <Text className="text-xs text-ink-300 ml-auto">
                     {todayEntry?.Checkout?.checkOutTime || formatTime(todayEntry?.Checkout?.checkedOutAt || "")}
                   </Text>
                 </View>

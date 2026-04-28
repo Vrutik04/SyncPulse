@@ -31,7 +31,7 @@ export const ScreenContainer = ({
     >
       <View
         className="flex-1 px-5 pt-3 "
-      
+
       >
         <View className="flex-row items-start gap-2 border-b border-ink-200/90 pb-5 pt-1 dark:border-ink-800/90">
           {showDrawerToggle ? (
@@ -51,14 +51,14 @@ export const ScreenContainer = ({
           </View>
           {showThemeToggle ? <ThemeToggleButton /> : null}
         </View>
-        <ScrollView 
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 28 }}>
-        <View className="pt-4">{children}</View>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 28 }}>
+          <View className="pt-4">{children}</View>
         </ScrollView>
       </View>
-      
+
       {footer}
     </SafeAreaView>
   );
