@@ -1,10 +1,9 @@
-
-
+import { auth } from "@/config/firebase";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect } from "react";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { auth } from "@/config/firebase";
+import { useEffect } from "react";
+
 
 WebBrowser.maybeCompleteAuthSession();
 

@@ -14,16 +14,15 @@ export const WeeklyDots = ({ total, filled }: WeeklyDots) => (
       {Array.from({ length: total }, (_, i) => (
         <View
           key={i}
-          className={`h-2.5 flex-1 rounded-full ${
-            i < filled
+          className={`h-2.5 flex-1 rounded-full ${i < filled
               ? "bg-clay dark:bg-clay-muted"
               : "bg-ink-200 dark:bg-ink-800"
-          }`}
+            }`}
         />
       ))}
     </View>
     <Text className="mt-2 text-xs text-ink-500 dark:text-ink-400 text-center " >
-      {filled} of {total} days Checked-In&out 
+      {filled} of {total} days Checked-In&out
     </Text>
   </View>
 );
